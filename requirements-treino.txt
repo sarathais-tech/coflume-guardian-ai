@@ -1,0 +1,6 @@
+# Necessário apenas para treinar a MLP.
+# Use uma versão do Python suportada pela sua versão do TensorFlow
+# (consulte https://www.tensorflow.org/install/pip) e registre a combinação
+# usada em resultados/<fonte>/<execucao>/ambiente.txt.
+-r requirements.txt
+tensorflow>=2.16

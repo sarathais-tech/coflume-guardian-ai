@@ -1,0 +1,8 @@
+# Núcleo: features, exportação, avaliação e testes.
+# Após a primeira instalação bem-sucedida, gere requirements.lock com
+#   pip freeze > requirements.lock
+# e use-o para reproduzir exatamente o mesmo ambiente.
+numpy>=1.26
+scikit-learn>=1.4
+pandas>=2.1
+pytest>=8.0
