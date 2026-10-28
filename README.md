@@ -45,8 +45,8 @@ Detalhes em [`docs/arquitetura.md`](docs/arquitetura.md).
 |---|---|
 | Contrato de integração v1.0.0 | Definido |
 | Especificação das features (incluindo primeira questão) | Definida e testada |
-| Runtime C++ da MLP float32 | Implementado, equivalência com Python testada no PC |
-| Teste de viabilidade no ESP32-S3 (pesos aleatórios) | **Pronto para rodar na placa**, resultados pendentes |
+| Runtime C++ da MLP float32 | Implementado; features idênticas e erro de P(acerto) ≤ 1,2e-7 em relação ao Python |
+| Teste de viabilidade no ESP32-S3 (pesos aleatórios) | Branch `exp/bancada-esp32s3`: validado no PC, **execução na placa pendente** |
 | Simulador de dados sintéticos | Próxima etapa |
 | Treino e avaliação (MLP × árvore) | Próxima etapa |
 

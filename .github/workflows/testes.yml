@@ -31,3 +31,24 @@ jobs:
           python-version: "3.11"
       - run: pip install -r requirements-treino.txt
       - run: pytest tests/test_mlp_keras.py
+
+  bancada-esp32s3:
+    name: Compila a bancada para ESP32-S3 (Arduino-ESP32 3.x)
+    runs-on: ubuntu-latest
+    env:
+      URL_ESP32: https://espressif.github.io/arduino-esp32/package_esp32_index.json
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: python -m ferramentas.gerar_bancada --semente 2026
+      - uses: arduino/setup-arduino-cli@v2
+      - run: arduino-cli core update-index --additional-urls "$URL_ESP32"
+      - run: arduino-cli core install esp32:esp32 --additional-urls "$URL_ESP32"
+      - run: arduino-cli core list
+      - run: >
+          arduino-cli compile --warnings all
+          --fqbn esp32:esp32:esp32s3:FlashSize=16M,PSRAM=opi
+          embarcado/bancada_ia
