@@ -1,0 +1,33 @@
+name: testes
+
+on:
+  push:
+    branches: [main, "feat/**", "exp/**", "fix/**"]
+  pull_request:
+
+jobs:
+  nucleo:
+    name: Núcleo (features, exportação, equivalência C++)
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pip install -r requirements.txt
+      - run: g++ --version
+      - run: pytest
+
+  keras:
+    name: MLP Keras
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements-treino.txt
+      - run: pytest tests/test_mlp_keras.py
