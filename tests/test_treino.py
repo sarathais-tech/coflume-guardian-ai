@@ -134,7 +134,7 @@ class TestLinhaDeComandoEAnotacoes:
         assert (tmp_path / "m" / "arvore.joblib").exists()
 
     def test_anotacoes_ida_e_volta(self):
-        conteudo = json.dumps({"x": list(range(30_000))}).encode()
+        conteudo = json.dumps({"x": [i * 7919 % 100_003 for i in range(3_000)]}).encode()
         linhas = treinar.anotacoes(conteudo, "resumo")
         assert linhas[0].startswith("::notice title=guardia-resumo::")
         anot = []
@@ -143,6 +143,19 @@ class TestLinhaDeComandoEAnotacoes:
             anot.append({"title": cab.removeprefix("title="), "message": msg})
         assert len(anot) > 1
         assert ler_resultado_ci.reconstruir(list(reversed(anot))) == conteudo
+
+    def test_partes_respeitam_o_limite_do_github(self):
+        import os
+        conteudo = os.urandom(20_000)  # incompressível: força várias partes
+        linhas = treinar.anotacoes(conteudo, "r")
+        partes = [linha.split("::", 2)[2] for linha in linhas[1:]]
+        assert 1 < len(partes) <= treinar.MAX_PARTES
+        assert all(len(p) <= 3_900 < 4_096 for p in partes)
+
+    def test_resultado_grande_demais_vira_aviso(self):
+        import os
+        linhas = treinar.anotacoes(os.urandom(60_000), "r")
+        assert len(linhas) == 2 and "guardia-resultado-grande" in linhas[1]
 
     def test_anotacao_adulterada_e_rejeitada(self):
         linha = treinar.anotacoes(b'{"a": 1}', "r")[1]

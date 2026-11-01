@@ -26,7 +26,10 @@ from pathlib import Path
 from guardia.treino import executar, tensorflow_disponivel
 
 RAIZ = Path(__file__).resolve().parents[1]
-TAMANHO_PARTE = 40_000
+# O GitHub corta cada anotação em 4.096 caracteres e aceita no máximo 10 avisos
+# (notice) por etapa: o resumo ocupa 1, sobram 9 partes de até 3.900 caracteres.
+TAMANHO_PARTE = 3_900
+MAX_PARTES = 9
 TITULO_PARTE = "guardia-resultado"
 
 
@@ -50,6 +53,9 @@ def anotacoes(conteudo: bytes, resumo: str) -> list[str]:
     codificado = base64.b64encode(gzip.compress(conteudo, mtime=0)).decode("ascii")
     partes = [codificado[i : i + TAMANHO_PARTE] for i in range(0, len(codificado), TAMANHO_PARTE)]
     linhas = [f"::notice title=guardia-resumo::{resumo}"]
+    if len(partes) > MAX_PARTES:
+        return linhas + [f"::warning title=guardia-resultado-grande::{len(partes)} partes excedem o limite de "
+                         f"{MAX_PARTES}; use o artefato da execução (sha256={sha})"]
     linhas += [f"::notice title={TITULO_PARTE} {i}/{len(partes)} sha256={sha}::{p}" for i, p in enumerate(partes, 1)]
     return linhas
 
