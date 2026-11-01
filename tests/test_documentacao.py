@@ -10,9 +10,7 @@ from tests.conftest import RAIZ
 DOCS = sorted([RAIZ / "README.md", *(RAIZ / "docs").rglob("*.md")])
 
 # Arquivos citados na documentação que só existem em branches ainda não integrados.
-PENDENTES_DE_INTEGRACAO = {
-    "viabilidade_embarcada.md": "branch exp/bancada-esp32s3",
-}
+PENDENTES_DE_INTEGRACAO: dict[str, str] = {}
 
 # SHA-256 do protocolo registrado em 28/10/2026 (commit 297bc99). Mudanças nos
 # critérios exigem novo commit com justificativa; ajustes de dados e divisão
@@ -47,9 +45,3 @@ def test_links_internos_existem(doc):
             continue
         assert (doc.parent / alvo).resolve().exists(), f"{doc.name}: link quebrado para {alvo}"
 
-
-@pytest.mark.xfail(strict=True, reason="docs/viabilidade_embarcada.md está no branch exp/bancada-esp32s3, ainda não integrado")
-def test_documentos_pendentes_de_integracao_ja_existem():
-    """Quando a bancada for integrada, este teste passa a falhar como XPASS: remover a pendência acima."""
-    for nome in PENDENTES_DE_INTEGRACAO:
-        assert (RAIZ / "docs" / nome).exists()
