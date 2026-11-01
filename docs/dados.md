@@ -15,6 +15,8 @@ Dados sintéticos e reais **nunca** são misturados sem rótulo, e seus resultad
 | O que permite afirmar | O pipeline funciona; comparação de modelos em ambiente controlado | Desempenho preditivo numa amostra pequena e específica |
 | O que **não** permite afirmar | Eficácia educacional; desempenho com crianças reais | Eficácia educacional (amostra pequena, sem grupo de controle) |
 
+Nos dados sintéticos, os níveis são gerados pela **política exploratória** (sorteio). Nos dados reais do cofre v0.8, eles serão escolhidos pela **política adaptativa** da Guardiã. As duas distribuições são diferentes e nunca devem ser comparadas sem essa ressalva (ver [`fluxo_partida.md`](fluxo_partida.md), seção 3).
+
 Um modelo treinado com dados misturados recebe o prefixo `misto` e deve ser avaliado **separadamente** em teste sintético e em teste real.
 
 ## Dados reais: condições
@@ -49,6 +51,8 @@ Implementada em `guardia/dados.py`, conforme o [protocolo](protocolo_avaliacao.m
 
 - A divisão é por `participante_id`: 70% / 15% / 15% dos **participantes**, semente 2026.
 - Como o `GroupShuffleSplit` faz uma divisão por vez, ela é feita em duas etapas: primeiro o teste, depois a validação dentro do restante. Os tamanhos são inteiros (2.100 / 450 / 450 para 3.000 participantes).
-- O resultado fica em `splits/split_v1.json`, versionado, com o SHA-256 dos IDs e do CSV.
+- O resultado fica versionado em `splits/`, com o SHA-256 dos IDs e do CSV:
+  - `split_v2.json` → `sessoes_v2` (`sim-1.1`, fluxo-0.8): 2.800 / 600 / 600. **Atual.**
+  - `split_v1.json` → `sessoes_v1` (`sim-1.0`): 2.100 / 450 / 450. Histórico.
 - O teste é lacrado: `conjunto(df, split, "teste")` lança `ConjuntoLacradoError` sem `abrir_teste=True`.
 - O split só se aplica a dados com exatamente os mesmos participantes e a mesma fonte.

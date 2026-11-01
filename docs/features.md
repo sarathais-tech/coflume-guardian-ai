@@ -68,13 +68,18 @@ Os valores neutros da tabela acima, com `n_respondidas = 0` e `resultado_ultima 
 ### O que o modelo responde
 Uma estimativa **populacional**: a chance de acerto típica de quem escolheu aquele nível inicial, numa questão daquele nível e categoria. Isso é aprendido dos dados, já que todas as sessões de treino contêm a sua primeira questão (com `n_respondidas = 0`). Ou seja, a primeira questão é uma situação **dentro da distribuição de treino**, não um caso especial que o modelo nunca viu.
 
-**Requisito para o simulador e para o piloto:** toda sessão registrada deve incluir a primeira questão. O teste `test_dados_incluem_partida_a_frio` (a ser criado com o simulador) vai verificar isso.
+**Requisito para o simulador e para o piloto:** toda sessão registrada deve incluir a primeira questão. O teste `test_dados_incluem_partida_a_frio` verifica isso.
 
 ### O que o firmware faz (política, lógica tradicional)
-1. **Categoria:** sorteada entre as 4, usando `esp_random()`. As 3 questões principais terão categorias diferentes.
-2. **Níveis candidatos:** apenas `nivel_inicial − 1` e `nivel_inicial` (limitados a 0–2). Na primeira questão nunca se oferece um nível acima do escolhido pela criança, para que a sessão não comece com frustração. Essa trava vale só para a primeira questão.
-3. **Escolha:** chamar `guardia::prever()` para cada candidato e escolher o de probabilidade mais próxima de 0,70. Em empate, fica o `nivel_inicial`.
-4. **Fallback:** se a previsão for `INVALIDO`, usar `nivel_inicial`.
+
+A política completa está no [contrato de fluxo `fluxo-0.8`](fluxo_partida.md) (ADR 0009). Para a primeira questão:
+
+1. **Categoria:** sorteada pelo jogo. As 3 perguntas da partida têm categorias diferentes.
+2. **Nível:** **o nível escolhido pela criança**. A Guardiã calcula e registra a previsão de partida a frio, mas não decide o nível da primeira pergunta.
+3. **A partir da segunda pergunta:** a Guardiã avalia os níveis da faixa nível inicial ± 1, e o jogo escolhe o de previsão mais próxima de 0,70.
+4. **Fallback:** se alguma previsão for `INVALIDO`, usar `nivel_inicial`.
+
+> Histórico: até 01/11/2026 esta seção permitia oferecer `nivel_inicial − 1` já na primeira questão. A regra mudou com o fluxo-0.8 para respeitar a escolha da criança e manter a v0.8 próxima da v0.7. **As features não mudaram.**
 
 ### Limitação honesta
 Na primeira questão a Guardiã só conhece a população, não a criança. A adaptação individual começa na segunda questão, quando há pelo menos um resultado observado. Isso deve ser dito na apresentação.

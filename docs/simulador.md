@@ -1,22 +1,27 @@
 # Simulador de dados sintéticos
 
-**Versão:** `sim-1.0` · **Código:** `guardia/simulador.py` · **Decisões:** [ADR 0008](adr/0008-simulador-e-politica-de-coleta.md)
+**Versão atual:** `sim-1.1` (fluxo-0.8) · **Histórico:** `sim-1.0` · **Código:** `guardia/simulador.py` · **Decisões:** [ADR 0008](adr/0008-simulador-e-politica-de-coleta.md), [ADR 0009](adr/0009-fluxo-v08-e-sim-1-1.md)
 
 > Tudo o que este simulador gera é **SINTÉTICO**. Serve para construir e testar o pipeline e comparar modelos em condições controladas. **Não** representa crianças reais e **não** comprova eficácia educacional.
 
 ## 1. Gerar os dados
 
 ```bash
-python -m ferramentas.gerar_sinteticos --semente 2026     # 3.000 participantes
-python -m ferramentas.dividir                              # splits/split_v1.json
+# Atual (sim-1.1, fluxo-0.8): 4.000 participantes
+python -m ferramentas.gerar_sinteticos --semente 2026
+python -m ferramentas.dividir                                   # splits/split_v2.json
+
+# Histórico (sim-1.0): 3.000 participantes
+python -m ferramentas.gerar_sinteticos --versao sim-1.0 --semente 2026
+python -m ferramentas.dividir --dados dados/sinteticos/sessoes_v1.csv --saida splits/split_v1.json
 ```
 
-| Saída | Versionada? |
-|---|---|
-| `dados/sinteticos/sessoes_v1.csv` | Não (regenerável) |
-| `dados/sinteticos/sessoes_v1.manifest.json` | Não (acompanha o CSV) |
-| `resultados/sinteticos/sessoes_v1_resumo.md` | Sim |
-| `splits/split_v1.json` | Sim |
+| Versão | Conjunto | Participantes / linhas | Split | Resumo (versionado) |
+|---|---|---|---|---|
+| **sim-1.1** | `sessoes_v2` | 4.000 / 12.000 | `splits/split_v2.json` (2.800 / 600 / 600) | `resultados/sinteticos/sessoes_v2_resumo.md` |
+| sim-1.0 | `sessoes_v1` | 3.000 / 12.248 | `splits/split_v1.json` (2.100 / 450 / 450) | `resultados/sinteticos/sessoes_v1_resumo.md` |
+
+Os CSVs e manifestos (`dados/sinteticos/`) não são versionados e são regenerados pelos comandos acima. O teste `test_conjunto_versionado_e_reproduzivel` regenera os dois conjuntos e compara com o SHA-256 registrado nos resumos, quando a versão do NumPy é a mesma.
 
 ## 2. Participantes simulados
 
@@ -34,17 +39,24 @@ O ganho de usar o nível inicial como sinal está nos dados, mas é **parcial**:
 
 ## 3. Fluxo da partida simulada
 
-Segue o fluxo combinado na Etapa 1 do projeto:
+| | **sim-1.1 (atual)** | sim-1.0 (histórico) |
+|---|---|---|
+| Referência | [fluxo-0.8](fluxo_partida.md), conferido com a descrição do firmware v0.7 feita pela equipe | Etapa 1 do projeto |
+| Perguntas | **Exatamente 3**, categorias distintas sorteadas | 3 principais + até 3 reforços |
+| Nível da pergunta 1 | **Nível escolhido pela criança** | Sorteado entre `nivel_inicial − 1` e `nivel_inicial` |
+| Nível das perguntas 2 e 3 | **Sorteado na faixa nível inicial ± 1** | Sorteado entre os 3 níveis |
+| Reforço após erro | **Não** | Sim (mesmo nível ou um abaixo, 50% / 50%) |
+| Ganho de habilidade após erro | **0** | +0,3 |
+| Dica (`*`) | Sim | Sim |
+| Tempo limite | 30 s | 30 s |
 
-1. **3 questões principais**, cada uma de uma categoria diferente (sorteadas).
-2. **Primeira questão:** nível sorteado entre `nivel_inicial − 1` e `nivel_inicial` (limitado a 0), conforme [`features.md`](features.md), seção 4.
-3. **Demais questões principais:** nível sorteado uniformemente entre os 3 (política de coleta exploratória; ver [ADR 0008](adr/0008-simulador-e-politica-de-coleta.md)).
-4. **Erro numa principal → 1 questão de reforço** na mesma categoria, no mesmo nível ou um abaixo (50% / 50%).
-5. Tempo limite de **30 s** em todas as questões.
+### Política exploratória de geração × política adaptativa do cofre
 
-Cada sessão tem de 3 a 6 questões.
+Em **todas** as versões o simulador **sorteia** o nível entre os níveis permitidos. Essa é a **política exploratória de coleta**, que existe só para gerar dados sem viés de seleção.
 
-> ⚠ **Pendente:** este fluxo não foi conferido com o firmware v0.7 (repositório `coflume`, fora do escopo deste repositório). Se o v0.7 usar outro fluxo, por exemplo outro limite de tempo, outro número de questões ou outra regra de reforço, os parâmetros devem ser ajustados **antes** do treino, e o simulador deve passar para `sim-1.1`.
+A **política adaptativa do cofre** escolhe o nível pela previsão da Guardiã (alvo de 0,70). Ela está em `guardia/politica.py` e no firmware v0.8, e **não é usada para gerar dados de treino**. No `sim-1.1` as duas compartilham `politica.niveis_permitidos()`, então o modelo é treinado exatamente sobre os níveis que o cofre pode consultar. Detalhes em [`fluxo_partida.md`](fluxo_partida.md), seção 3.
+
+Consequência: a taxa de partidas com 2 ou mais acertos nos dados gerados (67,3% no `sessoes_v2`) **não** é a taxa de desbloqueio esperada da v0.7 nem da v0.8.
 
 ## 4. Modelo de resposta
 
@@ -58,7 +70,7 @@ Para uma questão de nível `n` na categoria `c`:
    `P = 0,25 + 0,75 · sigmoide(1,2 · (θc − b) + 0,8 · dica)`
 
    É o modelo de 3 parâmetros da Teoria de Resposta ao Item. O piso de 0,25 representa o chute com 4 alternativas (A–D).
-5. **Aprendizagem:** após um erro, o jogo mostra uma explicação, e a habilidade na categoria sobe 0,3. Isso dá sentido à questão de reforço.
+5. **Aprendizagem após erro:** no `sim-1.0`, a habilidade na categoria sobe 0,3 depois de um erro, para dar sentido ao reforço. No `sim-1.1` o ganho é **0**: não há reforço e a categoria não se repete na partida. O parâmetro `ganho_feedback_apos_erro` continua disponível para análise de sensibilidade.
 
 Ordem fixa dos sorteios em cada questão: dificuldade, dica, tempo, acerto.
 
@@ -72,7 +84,7 @@ p_real = Σ_dica  P(dica) · (1 − P(esgotar | dica)) · P(correta | dica)
 
 Essa probabilidade é calculada no mesmo instante em que as features. Ela permite medir o erro de cada modelo em relação à verdade, como prevê o [protocolo](protocolo_avaliacao.md), seção 5. **É um oráculo: nunca pode ser feature.**
 
-Verificação: em 30.000 participantes simulados (semente 99), a taxa de acerto observada ficou a até 2,1 erros-padrão da média de `p_real` em todas as 10 faixas. No conjunto v1, a diferença global é 63,7% contra 63,6%.
+Verificação: em 30.000 participantes simulados (semente 99), a taxa de acerto observada ficou a até 2,1 erros-padrão da média de `p_real` em todas as 10 faixas. Diferença global entre acerto observado e média de `p_real`: 63,7% contra 63,6% no `sessoes_v1` e 62,7% contra 63,1% no `sessoes_v2` (cerca de 1 erro-padrão).
 
 ## 5. Features
 
@@ -92,7 +104,9 @@ O tempo é registrado com resolução de 0,01 s, e as features usam esse mesmo v
 
 1. **O modelo aprende o simulador.** Os parâmetros foram escolhidos por plausibilidade, não estimados de dados reais de crianças.
 2. **A forma da verdade é conhecida.** O acerto segue uma fórmula logística com piso, então modelos com estrutura parecida têm vantagem natural. Isso foi registrado no protocolo **antes** dos resultados, e os parâmetros não serão ajustados para favorecer nenhum modelo.
-3. **Política de coleta diferente da de uso.** Os níveis são sorteados uniformemente. No cofre, a Guardiã vai escolher os níveis, e os dados reais terão outra distribuição.
+3. **Política de coleta diferente da de uso.** Os níveis são sorteados uniformemente dentro da faixa permitida. No cofre, a Guardiã vai escolher os níveis, e os dados reais terão outra distribuição.
 4. **Comportamentos não simulados:** cansaço, distração, chute rápido, crianças que respondem em grupo, dificuldade real de cada questão do banco, leitura lenta de enunciados longos no TFT.
-5. **Sessões curtas (3 a 6 questões):** `n_respondidas` nunca passa de 5 nos dados, embora o contrato aceite até 8.
-6. **Fluxo não conferido com o firmware v0.7** (seção 3).
+5. **Sessões curtas:** no `sim-1.1`, `n_respondidas` vai só de 0 a 2 e `sequencia` de −2 a +2, embora o contrato aceite até 8 e ±3. Isso é coerente com o fluxo-0.8, mas o modelo não terá experiência com sessões mais longas.
+6. **Fluxo conferido com a descrição da v0.7 feita pela equipe, não com o código do firmware**, que está fora do escopo deste repositório.
+7. **Banco real de questões:** o simulador supõe dificuldade coerente com o nível (desvio de 0,3). Perguntas fora do nível no banco real reduzirão a precisão (ver [`banco_questoes.md`](banco_questoes.md)).
+8. **Nada aqui foi validado com crianças reais.**

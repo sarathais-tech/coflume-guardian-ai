@@ -47,8 +47,9 @@ Detalhes em [`docs/arquitetura.md`](docs/arquitetura.md).
 | Especificação das features (incluindo primeira questão) | Definida e testada |
 | Runtime C++ da MLP float32 | Implementado, equivalência com Python testada no PC |
 | Teste de viabilidade no ESP32-S3 (pesos aleatórios) | **Pronto para rodar na placa**, resultados pendentes |
-| Simulador de dados sintéticos (`sim-1.0`) | Implementado e testado; fluxo da partida a conferir com o firmware v0.7 |
-| Divisão por participante (`split_v1`) | Implementada; sem vazamento (testado) |
+| Contrato de fluxo da partida `fluxo-0.8` | Proposto e aprovado; política de referência em `guardia/politica.py` |
+| Simulador de dados sintéticos (`sim-1.1`, fluxo-0.8) | Implementado e testado; `sim-1.0` mantido como histórico |
+| Divisão por participante (`split_v2`; `split_v1` histórico) | Implementada; sem vazamento (testado) |
 | Treino e avaliação (MLP × árvore) | Próxima etapa |
 
 ## Início rápido
@@ -80,7 +81,8 @@ coflume-guardian-ai/
 │   ├── features.py           # cálculo das entradas (fonte da verdade)
 │   ├── inferencia_ref.py     # inferência de referência em numpy (float32)
 │   ├── mlp.py                # construção e treino da MLP (Keras)
-│   ├── simulador.py          # participantes e sessões SINTÉTICOS
+│   ├── simulador.py          # participantes e sessões SINTÉTICOS (política exploratória)
+│   ├── politica.py           # política adaptativa do cofre (referência do fluxo-0.8)
 │   ├── dados.py              # carregamento, validação e divisão por participante
 │   └── exportar/mlp_cpp.py   # gera guardia_modelo.h
 ├── embarcado/
@@ -107,6 +109,8 @@ coflume-guardian-ai/
 - [Protocolo de avaliação (pré-registrado)](docs/protocolo_avaliacao.md)
 - [Dados: sintéticos × reais](docs/dados.md)
 - [Simulador de dados sintéticos](docs/simulador.md)
+- [Contrato de fluxo da partida (fluxo-0.8)](docs/fluxo_partida.md)
+- [Plano do banco de questões](docs/banco_questoes.md)
 - [Viabilidade embarcada](docs/viabilidade_embarcada.md)
 - [Reprodução do treinamento](docs/reproducao.md)
 - [Fluxo de trabalho Git](docs/fluxo_git.md)

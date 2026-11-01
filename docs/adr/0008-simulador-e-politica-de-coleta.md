@@ -1,6 +1,6 @@
 # ADR 0008: Modelo do simulador e política de coleta exploratória
 
-- **Status:** aceito (aguardando revisão da equipe)
+- **Status:** aceito; fluxo e faixa de níveis substituídos pelo [ADR 0009](0009-fluxo-v08-e-sim-1-1.md) (o modelo de resposta continua valendo)
 - **Data:** 2026-11-01
 
 ## Contexto
