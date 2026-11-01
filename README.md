@@ -45,15 +45,14 @@ Detalhes em [`docs/arquitetura.md`](docs/arquitetura.md).
 |---|---|
 | Contrato de integração v1.0.0 | Definido |
 | Especificação das features (incluindo primeira questão) | Definida e testada |
-| Runtime C++ da MLP float32 | Implementado, equivalência com Python testada no PC |
-| Teste de viabilidade no ESP32-S3 (pesos aleatórios) | **Pronto para rodar na placa**, resultados pendentes |
+| Runtime C++ da MLP float32 | Implementado; features idênticas e erro de P(acerto) ≤ 1,2e-7 em relação ao Python |
+| Bancada de viabilidade no ESP32-S3 | Integrada a partir de `exp/bancada-esp32s3`; validada no PC; Wokwi e placa física pendentes |
 | Contrato de fluxo da partida `fluxo-0.8` (revisão 2) | Arquitetura aprovada; política de referência, com fallback de célula vazia, em `guardia/politica.py` |
 | Banco de perguntas da v0.8 | `banco_v08.csv`: 13 perguntas, 12 de 12 células, todas aptas na ST7735 com 16 px de folga; aguardando aprovação. Faltam 23 para a meta de 36 |
 | Interface na ST7735 | Proposta: paisagem, letra tamanho 2; a confirmar na tela física |
-| Treino da Guardiã | **Ainda não realizado** |
 | Simulador de dados sintéticos (`sim-1.1`, fluxo-0.8) | Implementado e testado; `sim-1.0` mantido como histórico |
 | Divisão por participante (`split_v2`; `split_v1` histórico) | Implementada; sem vazamento (testado) |
-| Treino e avaliação (MLP × árvore) | Próxima etapa |
+| Treino e avaliação em validação | Ver `resultados/sinteticos/treino_v2/` (teste lacrado) |
 
 ## Início rápido
 
