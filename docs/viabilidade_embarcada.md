@@ -118,6 +118,8 @@ Modelo `mlp8-sint-20261101-e6a4cf00` (13 → 8 → 1, 121 parâmetros, 556 bytes
 
 O job `bancada-esp32s3` compila `embarcado/bancada_ia` (pesos aleatórios) e `embarcado/bancada_wokwi` (MLP treinada) com o core oficial Arduino-ESP32 para ESP32-S3.
 
+Execução 41334398909 (01/11/2026), `embarcado/bancada_wokwi`: **compilou sem erros** com `--warnings all`. O sketch ocupa **349.059 bytes** de programa (26% da partição padrão de 1.310.720 bytes) e **31.676 bytes** de RAM em variáveis globais (9%). Esses números incluem os 400 vetores de teste da bancada, que não estarão no firmware do cofre.
+
 ## 6. Próximo experimento (opcional, ADR 0004)
 
 TensorFlow Lite Micro num sketch separado, `exp/tflite-micro`, comparando tamanho e latência com este runtime. Só se houver tempo após o portão G1.
