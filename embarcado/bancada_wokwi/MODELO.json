@@ -1,0 +1,49 @@
+{
+  "projeto": "Coflume — O Conhecimento Abre Portas",
+  "ia": "Guardiã IA",
+  "uso": "bancada no Wokwi e na placa; NÃO é versão de produção",
+  "modelo_id": "mlp8-sint-20261101-e6a4cf00",
+  "hash_sha256": "e6a4cf0086ccf5ab1eccecbe7aea02f3962a6ad7ced29b136d36c5b37b5b9991",
+  "contrato": "1.0.0",
+  "fonte_dados": "SINTETICO",
+  "arquitetura": {
+    "entradas": 13,
+    "ocultas": [
+      8
+    ],
+    "saida": "sigmoide",
+    "n_parametros": 121,
+    "precisao": "float32"
+  },
+  "origem": {
+    "execucao_ci": "41329660286",
+    "commit": "05bd902f495a444632b2cf72a71b900d5f868ae2",
+    "pesos_npz_sha256": "7cddea9b6f034c4bc6dcdd74bc85c8c3afe8c10b650fc89f94569d96fea1a9df",
+    "validacao_json_sha256": "efba6c58e5cd2ce97fb20a0333580c71af59a4a354904d04dace2ada5d12aaa5"
+  },
+  "conferencia_em_validacao": {
+    "n_validacao": 1800,
+    "diferenca_max": 7.632705885732283e-09,
+    "tolerancia": 1e-05,
+    "metricas_registradas": {
+      "log_loss": 0.6346175736463373,
+      "brier": 0.2221561980617783,
+      "roc_auc": 0.6340192841104213,
+      "ece": 0.012932564864555993,
+      "mae_p_real": 0.13613773397994042
+    }
+  },
+  "vetores": {
+    "aleatorios": 200,
+    "semente_aleatorios": 7,
+    "validacao": 200,
+    "validacao_por_posicao": {
+      "pergunta_1": 67,
+      "pergunta_2": 67,
+      "pergunta_3": 66
+    },
+    "partida_a_frio": 107
+  },
+  "teste_lacrado": true,
+  "aviso": "Modelo treinado com dados SINTÉTICOS; não foi validado com crianças reais."
+}
