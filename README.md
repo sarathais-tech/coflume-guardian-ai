@@ -46,7 +46,7 @@ Detalhes em [`docs/arquitetura.md`](docs/arquitetura.md).
 | Contrato de integração v1.0.0 | Definido |
 | Especificação das features (incluindo primeira questão) | Definida e testada |
 | Runtime C++ da MLP float32 | Implementado; features idênticas e erro de P(acerto) ≤ 1,2e-7 em relação ao Python |
-| Bancada de viabilidade no ESP32-S3 | Integrada a partir de `exp/bancada-esp32s3`; validada no PC; Wokwi e placa física pendentes |
+| Bancada de viabilidade no ESP32-S3 | MLP candidata treinada exportada só para a bancada (`embarcado/bancada_wokwi/`); aprovada no PC; Wokwi e placa física pendentes |
 | Contrato de fluxo da partida `fluxo-0.8` (revisão 2) | Arquitetura aprovada; política de referência, com fallback de célula vazia, em `guardia/politica.py` |
 | Banco de perguntas da v0.8 | `banco_v08.csv`: 13 perguntas, 12 de 12 células, todas aptas na ST7735 com 16 px de folga; aguardando aprovação. Faltam 23 para a meta de 36 |
 | Interface na ST7735 | Proposta: paisagem, letra tamanho 2; a confirmar na tela física |
@@ -117,6 +117,8 @@ coflume-guardian-ai/
 - [Plano do banco de questões](docs/banco_questoes.md)
 - [Interface da v0.8 na ST7735](docs/interface_st7735.md)
 - [Viabilidade embarcada](docs/viabilidade_embarcada.md)
+- [Bancada no Wokwi](docs/bancada_wokwi.md)
+- [Adendo 02: procedimento do teste final](docs/protocolo_adendo_02.md)
 - [Reprodução do treinamento](docs/reproducao.md)
 - [Fluxo de trabalho Git](docs/fluxo_git.md)
 - [Registros de decisão (ADRs)](docs/adr/)

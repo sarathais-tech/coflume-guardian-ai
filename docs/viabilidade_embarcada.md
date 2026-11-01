@@ -1,7 +1,7 @@
 # Viabilidade embarcada da MLP no ESP32-S3
 
-**Branch:** `exp/bancada-esp32s3`
-**Situação:** sketch pronto e validado no PC; **execução na placa pendente**.
+**Sketch:** `embarcado/bancada_ia/bancada_ia.ino` (v2) · **Bancada com a MLP treinada:** `embarcado/bancada_wokwi/` ([instruções](bancada_wokwi.md))
+**Situação (01/11/2026):** validado no PC com pesos aleatórios e com a MLP candidata treinada; **Wokwi e placa física pendentes**.
 
 ## 1. Objetivo
 
@@ -59,16 +59,21 @@ python -m ferramentas.gerar_bancada --ocultas 32 16
 
 ## 4. Critérios de aprovação
 
-| Critério | Exigido |
-|---|---|
-| Erro máximo de `P(acerto)` vs. Python | < 1e-5 |
-| Erro máximo nas features calculadas | ≤ 1e-6 |
-| Divergências em features inteiras | 0 |
-| Saídas inválidas para entradas válidas | 0 |
-| Latência média de `prever()` | < 1000 µs |
-| Pior latência observada de `prever()` | < 1000 µs |
-| Heap consumido durante o teste | 0 bytes |
-| Compila no Arduino-ESP32 3.x com `-Wall` | sim |
+| Critério | Exigido | Onde vale |
+|---|---|---|
+| Erro máximo de `P(acerto)` vs. Python (vetores aleatórios e de validação) | < 1e-5 | Wokwi e placa |
+| Erro máximo nas features calculadas | ≤ 1e-6 | Wokwi e placa |
+| Divergências em features inteiras | 0 | Wokwi e placa |
+| Saídas inválidas para entradas válidas | 0 | Wokwi e placa |
+| Entradas fora da faixa retornam `INVALIDO`; partida a frio em [0, 1] | 46 de 46 casos | Wokwi e placa |
+| Variação do heap livre ao redor de 10.000 chamadas de `prever()` e de `montar_entrada()` | 0 bytes | Wokwi e placa |
+| Latência média de `prever()` | < 1000 µs | **Só na placa** |
+| Pior latência observada de `prever()` | < 1000 µs | **Só na placa** |
+| Compila no Arduino-ESP32 3.x com `-Wall` | sim | CI |
+
+**Esclarecimentos de 01/11/2026 (bancada v2), pedidos pela equipe:**
+1. O critério de heap passou a medir **só as funções da Guardiã**, lendo o heap livre imediatamente antes e depois de laços que chamam apenas `prever()` ou `montar_entrada()`. O consumo total do firmware é registrado à parte, como informação. A exigência (nenhuma alocação dinâmica) é a mesma.
+2. No Wokwi, a CPU simulada é mais lenta que a real. A latência é registrada, mas só é avaliada na placa física. O resultado no Wokwi é `APROVADO_FUNCIONAL`.
 
 Uso de pilha: os buffers da inferência somam 37 floats (13 + 16 + 8), ou seja, 148 bytes, abaixo do limite de 256 bytes do contrato. Esse valor vem da análise do código e não é medido pela bancada.
 
@@ -85,15 +90,33 @@ O mesmo sketch foi compilado no PC (g++ 13, `-O2 -Wall -Wextra -Werror`) com um 
 | Divergências / inválidos | 0 / 0 |
 | Pesos e padronização | 1.548 bytes |
 
-### 5.2 ESP32-S3 N16R8
+### 5.2 MLP candidata treinada no PC (01/11/2026)
 
-| Data | Modelo | Erro P máx. | Latência média | Pior latência | Decisão 3 níveis | Heap | Sketch | Resultado |
-|---|---|---|---|---|---|---|---|---|
-| _pendente_ | mlp16x8-aleat | | | | | | | |
+Modelo `mlp8-sint-20261101-e6a4cf00` (13 → 8 → 1, 121 parâmetros, 556 bytes de pesos e padronização), com 200 vetores aleatórios e 200 da validação. Executado pelo teste `tests/test_bancada_wokwi.py`:
 
-### 5.3 Compilação no CI
+| Critério | Resultado no PC |
+|---|---|
+| Erro máximo de P(acerto): aleatórios / validação | 1,19e-7 / 1,19e-7 |
+| Erro máximo nas features | 0 |
+| Divergências / inválidos | 0 / 0 |
+| Entradas inválidas e partida a frio | 46 de 46 |
+| Variação do heap em `prever()` / `montar_entrada()` | 0 / 0 bytes (medido com alocações reais do processo) |
 
-O job `bancada-esp32s3` do GitHub Actions compila o sketch com o core oficial Arduino-ESP32. Esse job ainda não foi executado; ele roda no primeiro push ao GitHub.
+### 5.3 Wokwi (ESP32-S3 simulado)
+
+| Data | Modelo | Erro P máx. (aleat. / valid.) | Casos de entrada | Heap prever / montar | Resultado |
+|---|---|---|---|---|---|
+| _pendente_ | mlp8-sint-20261101-e6a4cf00 | | | | |
+
+### 5.4 ESP32-S3 N16R8 (placa física)
+
+| Data | Modelo | Erro P máx. | Latência média | Pior latência | Decisão 3 níveis | Heap prever / montar | Resultado |
+|---|---|---|---|---|---|---|---|
+| _pendente_ | mlp8-sint-20261101-e6a4cf00 | | | | | | |
+
+### 5.5 Compilação no CI
+
+O job `bancada-esp32s3` compila `embarcado/bancada_ia` (pesos aleatórios) e `embarcado/bancada_wokwi` (MLP treinada) com o core oficial Arduino-ESP32 para ESP32-S3.
 
 ## 6. Próximo experimento (opcional, ADR 0004)
 
