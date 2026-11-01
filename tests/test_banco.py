@@ -73,6 +73,23 @@ class TestTela:
         assert analisar(carregar_banco(p), LayoutTFT.paisagem()).avaliacoes[0].situacao == APTA
         assert analisar(carregar_banco(p), LayoutTFT(escala=2)).avaliacoes[0].situacao == AJUSTAR
 
+    def test_altura_em_pixels_com_moldura_menor(self, tmp_path):
+        p = carregar_banco(gravar(tmp_path, [linha("T1")]))[0]
+        from guardia.banco import altura_por_tela
+        uniforme = altura_por_tela(p, LayoutTFT())
+        assert uniforme["pergunta"] == 8 * 8  # equivale às 8 linhas do tamanho 1
+        misto = altura_por_tela(p, LayoutTFT(escala=2, escala_moldura=1, linhas_cabecalho=2))
+        # cabeçalho (2) + rodapé (1) em tamanho 1; corpo em tamanho 2 com 10 colunas:
+        # enunciado "Quanto e 2 + 3?" quebra em 2 linhas + separador (1) + 4 alternativas
+        assert misto["pergunta"] == 3 * 8 + (2 + 1 + 4) * 16
+
+    def test_cabecalho_com_temporizador_e_progresso(self, tmp_path):
+        from guardia.banco import relatorio_markdown
+        r = analisar(carregar_banco(gravar(tmp_path, [linha("T1")])), LayoutTFT(escala=2))
+        assert "**não cabe** em 10 colunas" in relatorio_markdown(r, "x")
+        r = analisar(carregar_banco(gravar(tmp_path, [linha("T1")])), LayoutTFT(escala=2, escala_moldura=1))
+        assert "cabe." in relatorio_markdown(r, "x")
+
     def test_acentos_geram_aviso(self, tmp_path):
         r = analisar(carregar_banco(gravar(tmp_path, [linha("T1", enunciado="Qual é a estação?")])))
         a = r.avaliacoes[0]
@@ -144,6 +161,6 @@ def test_linha_de_comando(tmp_path, capsys):
     saida = tmp_path / "rel.md"
     assert validar_banco.main([str(caminho), "--relatorio", str(saida)]) == 0
     texto = saida.read_text(encoding="utf-8")
-    assert "21 colunas × 20 linhas" in texto and "Todas as partidas possíveis são viáveis." in texto
+    assert "corpo tamanho 1 (21 colunas)" in texto and "Todas as partidas possíveis são viáveis." in texto
     ruim = gravar(tmp_path, [linha("T1", correta="Z")])
     assert validar_banco.main([str(ruim)]) == 1

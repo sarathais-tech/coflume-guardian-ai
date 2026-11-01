@@ -38,17 +38,49 @@ PENDENTE = "pendente"        # falta classificar nível ou categoria
 INVALIDA = "invalida"        # faltam dados essenciais
 
 
+# Texto mais longo do cabeçalho: nível, progresso e temporizador.
+CABECALHO_MAIS_LONGO = "DESAFIANTE 3/3 30s"
+
+
 @dataclass(frozen=True)
 class LayoutTFT:
-    """Ocupação de tela em linhas de texto. Valores padrão: ST7735 em retrato, tamanho 1."""
+    """Ocupação da tela. Valores padrão: ST7735 em retrato, tamanho 1.
+
+    ``escala`` é o tamanho do texto do CORPO (enunciado, alternativas, dica).
+    ``escala_moldura`` é o do cabeçalho e do rodapé; se None, igual a ``escala``.
+    O encaixe é verificado em pixels, o que permite combinar os dois tamanhos.
+    """
 
     largura_px: int = 128
     altura_px: int = 160
     celula_px: tuple[int, int] = (6, 8)
     escala: int = 1
-    linhas_cabecalho: int = 1   # nível, categoria e tempo
-    linhas_rodape: int = 1      # "*: dica" / tempo restante
+    linhas_cabecalho: int = 1   # nível, progresso e temporizador
+    linhas_rodape: int = 1      # "*=Dica"
     linhas_separadoras: int = 1  # espaço entre enunciado e alternativas
+    escala_moldura: int | None = None
+
+    @property
+    def esc_moldura(self) -> int:
+        return self.escala_moldura or self.escala
+
+    @property
+    def altura_linha_corpo(self) -> int:
+        return self.celula_px[1] * self.escala
+
+    @property
+    def altura_linha_moldura(self) -> int:
+        return self.celula_px[1] * self.esc_moldura
+
+    @property
+    def colunas_moldura(self) -> int:
+        return self.largura_px // (self.celula_px[0] * self.esc_moldura)
+
+    def descricao(self) -> str:
+        orient = "retrato" if self.altura_px >= self.largura_px else "paisagem"
+        return (f"{self.largura_px}×{self.altura_px} px ({orient}), corpo tamanho {self.escala} "
+                f"({self.colunas} colunas), cabeçalho/rodapé tamanho {self.esc_moldura}, "
+                f"{self.linhas_cabecalho} linha(s) de cabeçalho")
 
     @property
     def colunas(self) -> int:
@@ -160,6 +192,22 @@ def linhas_por_tela(p: Pergunta, layout: LayoutTFT) -> dict[str, int]:
     return {"pergunta": pergunta, "dica": dica, "resposta": resposta}
 
 
+def altura_por_tela(p: Pergunta, layout: LayoutTFT) -> dict[str, int]:
+    """Altura em pixels de cada tela, com corpo e moldura em escalas possivelmente diferentes."""
+    col = layout.colunas
+    hc, hm = layout.altura_linha_corpo, layout.altura_linha_moldura
+    corpo = len(quebrar(p.enunciado, col)) + layout.linhas_separadoras + sum(
+        len(quebrar(f"{a}) {p.alternativas[a]}", col, recuo=3)) for a in ALTERNATIVAS
+    )
+    texto_correta = p.alternativas.get(p.correta, "")
+    return {
+        "pergunta": (layout.linhas_cabecalho + layout.linhas_rodape) * hm + corpo * hc,
+        "dica": layout.linhas_cabecalho * hm + len(quebrar(f"Dica: {p.dica}", col)) * hc,
+        "resposta": layout.linhas_cabecalho * hm
+        + len(quebrar(f"Resposta: {p.correta}) {texto_correta}", col, recuo=3)) * hc,
+    }
+
+
 def avaliar(p: Pergunta, layout: LayoutTFT) -> Avaliacao:
     motivos, avisos = [], []
     if not p.id:
@@ -176,8 +224,8 @@ def avaliar(p: Pergunta, layout: LayoutTFT) -> Avaliacao:
     if motivos:
         return Avaliacao(p, INVALIDA, motivos)
 
-    linhas = linhas_por_tela(p, layout)
-    ajustes = [f"tela de {tela} usa {n} de {layout.linhas} linhas" for tela, n in linhas.items() if n > layout.linhas]
+    alturas = altura_por_tela(p, layout)
+    ajustes = [f"tela de {tela} usa {h} de {layout.altura_px} px" for tela, h in alturas.items() if h > layout.altura_px]
     if not p.dica:
         ajustes.append("sem dica (a tecla * precisa de texto)")
     texto = " ".join([p.enunciado, p.dica, *p.alternativas.values()])
@@ -193,8 +241,8 @@ def avaliar(p: Pergunta, layout: LayoutTFT) -> Avaliacao:
     if p.categoria is None:
         pendencias.append("categoria não classificada")
     if pendencias:
-        return Avaliacao(p, PENDENTE, pendencias + ajustes, avisos, linhas)
-    return Avaliacao(p, AJUSTAR if ajustes else APTA, ajustes, avisos, linhas)
+        return Avaliacao(p, PENDENTE, pendencias + ajustes, avisos, alturas)
+    return Avaliacao(p, AJUSTAR if ajustes else APTA, ajustes, avisos, alturas)
 
 
 @dataclass
@@ -235,11 +283,13 @@ def analisar(perguntas: list[Pergunta], layout: LayoutTFT | None = None, meta_po
 
 
 def relatorio_markdown(r: RelatorioBanco, titulo: str) -> str:
+    cab_ok = len(CABECALHO_MAIS_LONGO) <= r.layout.colunas_moldura
     L = [f"# {titulo}", "",
-         f"Tela: {r.layout.largura_px}×{r.layout.altura_px} px, escala {r.layout.escala} → "
-         f"{r.layout.colunas} colunas × {r.layout.linhas} linhas.", "",
+         f"Tela: {r.layout.descricao()}.", "",
+         f"Cabeçalho mais longo (`{CABECALHO_MAIS_LONGO}`, {len(CABECALHO_MAIS_LONGO)} caracteres): "
+         + ("cabe." if cab_ok else f"**não cabe** em {r.layout.colunas_moldura} colunas."), "",
          "## Situação das perguntas", "",
-         "| id | origem | nível | categoria | situação | linhas (pergunta/dica/resposta) | motivos | avisos |",
+         f"| id | origem | nível | categoria | situação | altura em px, de {r.layout.altura_px} (pergunta/dica/resposta) | motivos | avisos |",
          "|---|---|---|---|---|---|---|---|"]
     for a in r.avaliacoes:
         p = a.pergunta
