@@ -30,4 +30,4 @@ jobs:
         with:
           python-version: "3.11"
       - run: pip install -r requirements-treino.txt
-      - run: pytest tests/test_mlp_keras.py
+      - run: pytest tests/test_mlp_keras.py tests/test_treino.py

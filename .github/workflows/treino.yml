@@ -1,0 +1,41 @@
+name: treino
+
+# Treino oficial da Etapa 2: todos os modelos no MESMO ambiente e com os MESMOS dados.
+# Avalia somente em VALIDAÇÃO; o conjunto de teste continua lacrado.
+# O resultado completo é publicado como anotações (ver ferramentas/ler_resultado_ci.py)
+# e como artefato da execução.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["feat/treino**"]
+    paths:
+      - "guardia/**"
+      - "ferramentas/treinar.py"
+      - "splits/split_v2.json"
+      - "requirements*.txt"
+      - ".github/workflows/treino.yml"
+
+jobs:
+  treino-oficial:
+    name: Treino oficial (validação; teste lacrado)
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements-treino.txt
+      - run: pip freeze > ambiente-pip.txt
+      - name: Gerar sessoes_v2 (sim-1.1, semente 2026)
+        run: python -m ferramentas.gerar_sinteticos --semente 2026 --sem-resumo
+      - name: Treinar e avaliar em validação
+        run: python -m ferramentas.treinar --anotacoes --salvar-modelos modelos/treino_v2
+      - uses: actions/upload-artifact@v4
+        with:
+          name: treino-v2-validacao
+          path: |
+            resultados/sinteticos/treino_v2/
+            modelos/treino_v2/
+            ambiente-pip.txt
