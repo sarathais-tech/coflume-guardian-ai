@@ -46,6 +46,16 @@ static const float LIMITE_LATENCIA_US = 1000.0f;
 
 volatile float sumidouro = 0.0f;  // impede o compilador de descartar as chamadas
 
+// Tipos usados nas funções abaixo vêm ANTES da primeira função: o Arduino gera
+// protótipos automáticos e os insere antes da primeira definição de função.
+struct Grupo {
+  float erro_p_max = 0.0f;
+  float erro_feat_max = 0.0f;
+  long falhas_inteiras = 0;
+  long invalidos = 0;
+  long n = 0;
+};
+
 static guardia::Entrada entradas[GUARDIA_N_VETORES];
 
 static void linha(const char* chave, const char* valor) { Serial.printf("BANCADA,%s,%s\n", chave, valor); }
@@ -56,14 +66,6 @@ static void montar_historico(const GuardiaVetorTeste& v, guardia::Historico& h) 
   guardia::historico_limpar(h);
   for (int i = 0; i < v.n_historico; ++i) guardia::historico_adicionar(h, v.historico[i]);
 }
-
-struct Grupo {
-  float erro_p_max = 0.0f;
-  float erro_feat_max = 0.0f;
-  long falhas_inteiras = 0;
-  long invalidos = 0;
-  long n = 0;
-};
 
 static bool equivalencia(int ini, int fim, Grupo& g) {
   guardia::Historico h;

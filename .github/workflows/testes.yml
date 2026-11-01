@@ -19,7 +19,15 @@ jobs:
           python-version: ${{ matrix.python }}
       - run: pip install -r requirements.txt
       - run: g++ --version
-      - run: pytest
+      - name: pytest (falhas publicadas como anotações)
+        shell: bash
+        run: |
+          set -o pipefail
+          pytest -rfE 2>&1 | tee pytest.log || {
+            grep -E "^(FAILED|ERROR) " pytest.log | head -15 | sed 's/^/::error title=pytest::/'
+            grep -E "^E  " pytest.log | head -15 | sed 's/^/::error title=pytest-detalhe::/'
+            exit 1
+          }
 
   keras:
     name: MLP Keras
@@ -48,12 +56,20 @@ jobs:
       - run: arduino-cli core update-index --additional-urls "$URL_ESP32"
       - run: arduino-cli core install esp32:esp32 --additional-urls "$URL_ESP32"
       - run: arduino-cli core list
-      - run: >
-          arduino-cli compile --warnings all
-          --fqbn esp32:esp32:esp32s3:FlashSize=16M,PSRAM=opi
-          embarcado/bancada_ia
-      - name: Compila a bancada do Wokwi com a MLP treinada
+      - name: Compila a bancada (pesos aleatórios)
+        shell: bash
         run: |
+          set -o pipefail
+          arduino-cli compile --warnings all --fqbn esp32:esp32:esp32s3:FlashSize=16M,PSRAM=opi \
+            embarcado/bancada_ia 2>&1 | tee compila1.log || {
+            grep -iE "error|erro" compila1.log | head -15 | sed 's/^/::error title=arduino::/'; exit 1; }
+      - name: Compila a bancada do Wokwi com a MLP treinada
+        shell: bash
+        run: |
+          set -o pipefail
           mkdir -p "$RUNNER_TEMP/sketch"
           cp embarcado/bancada_wokwi/sketch.ino embarcado/bancada_wokwi/*.h "$RUNNER_TEMP/sketch/"
-          arduino-cli compile --warnings all --fqbn esp32:esp32:esp32s3:FlashSize=16M,PSRAM=opi "$RUNNER_TEMP/sketch"
+          arduino-cli compile --warnings all --fqbn esp32:esp32:esp32s3:FlashSize=16M,PSRAM=opi \
+            "$RUNNER_TEMP/sketch" 2>&1 | tee compila2.log || {
+            grep -iE "error|erro" compila2.log | head -15 | sed 's/^/::error title=arduino::/'; exit 1; }
+          grep -E "Sketch uses|Global variables" compila2.log | sed 's/^/::notice title=arduino-tamanho::/'

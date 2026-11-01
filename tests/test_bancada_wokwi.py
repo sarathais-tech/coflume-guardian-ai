@@ -5,6 +5,7 @@ que o sketch exportado é aprovado no PC e que nada usa o conjunto de teste.
 """
 
 import json
+import re
 import shutil
 import subprocess
 
@@ -70,13 +71,42 @@ def test_diagrama_so_com_a_placa():
     assert [p["id"] for p in d["parts"]] == ["esp"] and "esp32-s3" in d["parts"][0]["type"]
 
 
+NUMERO = re.compile(r"-?\d+(?:\.\d+)?(?:e[-+]?\d+)?")
+
+
+def _iguais_com_tolerancia(a: str, b: str, tol: float = 1e-6) -> bool:
+    """Texto idêntico fora dos números; números reais iguais até ``tol``.
+
+    As probabilidades esperadas vêm de multiplicações em float32 do NumPy, cujo
+    último dígito pode variar entre CPUs; inteiros e textos devem ser idênticos.
+    """
+    if NUMERO.sub("#", a) != NUMERO.sub("#", b):
+        return False
+    for x, y in zip(NUMERO.findall(a), NUMERO.findall(b)):
+        if x != y and ("." not in x + y and "e" not in x + y or abs(float(x) - float(y)) > tol):
+            return False
+    return True
+
+
 def test_exportacao_reproduz_a_pasta_versionada(dados_v2, tmp_path):
     csv, split = dados_v2
     origem = json.loads((TREINO / "ORIGEM.json").read_text(encoding="utf-8"))
     exportar_bancada.exportar(tmp_path, TREINO / "mlp_candidata.npz", TREINO / "validacao.json",
                               origem["validacao_json_sha256_publicado_pelo_ci"], csv, split)
-    for nome in ARQUIVOS:
+    # Gerados sem nenhuma conta: devem ser idênticos byte a byte.
+    for nome in ("sketch.ino", "guardia_modelo.h", "guardia_runtime.h", "diagram.json"):
         assert (tmp_path / nome).read_bytes() == (PASTA / nome).read_bytes(), nome
+    # Contêm probabilidades calculadas: textos e inteiros idênticos, reais até 1e-6.
+    for nome in ("vetores_teste.h", "MODELO.json"):
+        assert _iguais_com_tolerancia((tmp_path / nome).read_text(encoding="utf-8"),
+                                      (PASTA / nome).read_text(encoding="utf-8")), nome
+
+
+def test_comparacao_tolerante_detecta_diferencas_reais():
+    assert _iguais_com_tolerancia("p 0.50000001f n 3", "p 0.5f n 3")
+    assert not _iguais_com_tolerancia("p 0.51f n 3", "p 0.5f n 3")
+    assert not _iguais_com_tolerancia("p 0.5f n 4", "p 0.5f n 3")
+    assert not _iguais_com_tolerancia("p 0.5f id A", "p 0.5f id B")
 
 
 def test_exportacao_recusa_validacao_adulterada(dados_v2, tmp_path):
