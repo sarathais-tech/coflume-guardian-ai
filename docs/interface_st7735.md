@@ -96,4 +96,4 @@ Opções para a v0.8:
 
 1. Confirmar na ST7735 física a orientação, a legibilidade em tamanho 2 e o desenho dos glifos.
 2. Ao reescrever as perguntas com acentos, rodar o validador de novo. A contagem de caracteres não muda com a opção B.
-3. Dar folga à `V07-MES-2`, encurtando "Golpe digital" ou exibindo as alternativas curtas em grade 2×2.
+3. ~~Dar folga à `V07-MES-2`~~ Resolvido no `banco_v08.csv`: o enunciado de `V07-MES-2-R1` ("Phishing e...") ocupa 1 linha. **Todas as 13 perguntas da v0.8 deixam 16 px de folga** (`--margem-px 16`).

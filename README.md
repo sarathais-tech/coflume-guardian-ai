@@ -48,7 +48,7 @@ Detalhes em [`docs/arquitetura.md`](docs/arquitetura.md).
 | Runtime C++ da MLP float32 | Implementado, equivalência com Python testada no PC |
 | Teste de viabilidade no ESP32-S3 (pesos aleatórios) | **Pronto para rodar na placa**, resultados pendentes |
 | Contrato de fluxo da partida `fluxo-0.8` (revisão 2) | Arquitetura aprovada; política de referência, com fallback de célula vazia, em `guardia/politica.py` |
-| Banco de perguntas da v0.8 | 9 perguntas da v0.7 classificadas (8 de 12 células); faltam 27 para a meta de 36 |
+| Banco de perguntas da v0.8 | `banco_v08.csv`: 13 perguntas, 12 de 12 células, todas aptas na ST7735 com 16 px de folga; aguardando aprovação. Faltam 23 para a meta de 36 |
 | Interface na ST7735 | Proposta: paisagem, letra tamanho 2; a confirmar na tela física |
 | Treino da Guardiã | **Ainda não realizado** |
 | Simulador de dados sintéticos (`sim-1.1`, fluxo-0.8) | Implementado e testado; `sim-1.0` mantido como histórico |

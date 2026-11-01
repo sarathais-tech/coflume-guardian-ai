@@ -1,6 +1,6 @@
 # Plano do banco de questões para a v0.8
 
-**Situação:** as 9 perguntas da v0.7 foram transcritas para `questoes/banco_v07.csv` (texto original preservado) e classificadas (seção 8). O banco da **v0.7 não é alterado**. A interface proposta para a ST7735 está em [`interface_st7735.md`](interface_st7735.md).
+**Situação:** as 9 perguntas da v0.7 estão em `questoes/banco_v07.csv` (histórico, texto original preservado) e classificadas (seção 8). O banco da v0.8 está em `questoes/banco_v08.csv`: 13 perguntas cobrindo as 12 células (seção 9), **aguardando aprovação**. O banco da **v0.7 não é alterado**. A interface proposta para a ST7735 está em [`interface_st7735.md`](interface_st7735.md).
 
 **Ferramenta:** `python -m ferramentas.validar_banco <arquivo.csv>` (código em `guardia/banco.py`)
 **Modelo do arquivo:** `questoes/banco_modelo.csv`
@@ -166,3 +166,69 @@ Relatórios gerados pelo validador:
 - `resultados/banco/banco_v07_st7735_retrato_t1.md`: configuração padrão da ferramenta.
 - `resultados/banco/banco_v07_st7735_paisagem_t2.md`: paisagem, letra tamanho 2, com rodapé (8 de 9 cabem).
 - `resultados/banco/banco_v07_st7735_paisagem_t2_proposta.md`: layout proposto (9 de 9 cabem).
+
+## 9. Banco da v0.8 (`questoes/banco_v08.csv`)
+
+**Situação:** proposta, aguardando aprovação da equipe. `revisado_por` está vazio de propósito.
+
+### Regras do arquivo
+
+- `banco_v07.csv` é **histórico** e não muda; um teste fixa o SHA-256 dele.
+- `origem` indica a procedência: `v0.7` (idêntica à v0.7), `v0.7-revisada` (id com sufixo `-R1`) ou `nova-v0.8`.
+- Texto sem acentos, como na v0.7, até a solução de fonte ser confirmada ([`interface_st7735.md`](interface_st7735.md), seção 4). As perguntas novas foram escritas **sem palavras que exijam acento**, para ficarem corretas mesmo assim. A única exceção é a dica pedida para V07-MES-1-R1 ("potências"; o `ê` existe na fonte padrão, mas precisa de conversão).
+
+### As 13 perguntas
+
+| id | Origem | Nível | Categoria | Enunciado | A | B | C | D | Correta | Dica |
+|---|---|---|---|---|---|---|---|---|---|---|
+| V07-EXP-1 | v0.7 | Explorador | Matemática | Quanto e 6 x 7? | 36 | 42 | 48 | 40 | B | 6 grupos de 7 |
+| V07-EXP-3-R1 | revisada | Explorador | Português | Qual palavra esta correta? | Caza | Casa | Kasa | **Casza** | B | **S entre vogais tem som de Z** |
+| V08-EXP-LOG-1 | nova | Explorador | Lógica | Continue: 1,3,5,7 | 8 | 9 | 10 | 11 | B | Pule de 2 em 2 |
+| V07-EXP-2 | v0.7 | Explorador | Conhecimentos gerais | Qual e um planeta? | Lua | Sol | Marte | Nuvem | C | Orbita o Sol |
+| V07-DES-1 | v0.7 | Desafiante | Matemática | Quanto e 12 x 8? | 86 | 94 | 96 | 108 | C | 10x8 + 2x8 |
+| V08-DES-POR-1 | nova | Desafiante | Português | Plural de flor? | Flors | Flores | Floris | Floros | B | Se termina em R, use ES |
+| V07-DES-3 | v0.7 | Desafiante | Lógica | Proximo: 2,4,8,16... | 18 | 24 | 30 | 32 | D | Dobra a cada vez |
+| V07-DES-2 | v0.7 | Desafiante | Conhecimentos gerais | Qual e um mamifero? | Tubarao | Golfinho | Polvo | Sardinha | B | Respira ar |
+| V07-MES-1-R1 | revisada | Mestre | Matemática | Binario 1010 = decimal? | 8 | 9 | 10 | 12 | C | **Use potências de 2** |
+| V08-MES-POR-1 | nova | Mestre | Português | Ontem eles ___ bola. | jogou | jogaram | jogam | joga | B | Eles: plural. Ontem: passado |
+| V08-MES-LOG-1 | nova | Mestre | Lógica | Continue: 1,1,2,3,5 | 6 | 7 | 8 | 9 | C | Some os dois anteriores |
+| V07-MES-2-R1 | revisada | Mestre | Conhecimentos gerais | **Phishing e...** | Backup | Golpe digital | Antivirus | Hardware | B | Engana o usuario |
+| V07-MES-3 | v0.7 | Mestre | Conhecimentos gerais | Qual senha e melhor? | 123456 | senha123 | nome2026 | G7!mP2#x | D | Unica e aleatoria |
+
+### Revisões em relação à v0.7
+
+| id | Mudança | Motivo |
+|---|---|---|
+| V07-EXP-3-R1 | Alternativa D: "Cassa" → "Casza" | "Cassa" também é palavra correta (pedido da equipe) |
+| V07-EXP-3-R1 | Dica: "Tem a letra S" → "S entre vogais tem som de Z" | **Proposta minha, precisa de aprovação.** Com "Casza", a dica antiga vale para Casa, Kasa e Casza e não ajuda. A nova ensina a regra e aponta só para "Casa" |
+| V07-MES-1-R1 | Dica: "8 + 2" → "Use potências de 2" | A dica antiga entregava a resposta (pedido da equipe) |
+| V07-MES-2-R1 | Enunciado: "O que e phishing?" → "Phishing e..." | Margem na ST7735: o enunciado passa a ocupar 1 linha, e a tela usa 112 de 128 px |
+
+### Perguntas novas: por que cada resposta é a única correta
+
+| id | Justificativa |
+|---|---|
+| V08-EXP-LOG-1 | Sequência de ímpares, +2 a cada passo: depois de 7 vem 9. Nenhuma outra alternativa segue a regra |
+| V08-DES-POR-1 | Palavras terminadas em R fazem plural com -ES ("flor" → "flores"); as outras formas não existem |
+| V08-MES-POR-1 | "Ontem" pede passado e "eles" pede plural: só "jogaram" atende às duas condições ("jogou" é singular; "jogam" e "joga" estão no presente) |
+| V08-MES-LOG-1 | Sequência de Fibonacci: cada número é a soma dos dois anteriores, 3 + 5 = 8 |
+
+### Verificação na ST7735 (paisagem 160×128, corpo em tamanho 2)
+
+```bash
+python -m ferramentas.validar_banco questoes/banco_v08.csv --orientacao paisagem --escala 2 \
+  --escala-moldura 1 --linhas-cabecalho 2 --linhas-rodape 0 --sem-separador --margem-px 16
+```
+
+- **13 de 13 aptas** com margem mínima de 16 px, ou seja, uma linha em tamanho 2: todas as telas de pergunta usam 112 de 128 px.
+- Telas de dica: até 80 px (V08-MES-POR-1). Telas de resposta: até 64 px.
+- **12 de 12 células cobertas**; todas as partidas viáveis.
+- Faltam **23** perguntas para a meta de 36 e **47** para a de 60.
+- Avisos: `ê` em V07-MES-1-R1 (conversão de fonte) e "sem revisor registrado" em todas.
+- Relatório: `resultados/banco/banco_v08_st7735_paisagem_t2.md`.
+
+### Observações para a revisão
+
+- As três perguntas de Lógica são sequências numéricas. Funcionam, mas há pouca variedade de tipo de raciocínio.
+- V08-MES-POR-1 usa `___` para a lacuna. Na fonte padrão, o sublinhado aparece como uma linha na base do caractere; conferir na tela física.
+- Os níveis de dificuldade das novas perguntas são estimativas da equipe de desenvolvimento. Só o piloto, com o `id` no log, pode confirmá-los.
