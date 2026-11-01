@@ -48,7 +48,8 @@ Detalhes em [`docs/arquitetura.md`](docs/arquitetura.md).
 | Runtime C++ da MLP float32 | Implementado, equivalência com Python testada no PC |
 | Teste de viabilidade no ESP32-S3 (pesos aleatórios) | **Pronto para rodar na placa**, resultados pendentes |
 | Contrato de fluxo da partida `fluxo-0.8` (revisão 2) | Arquitetura aprovada; política de referência, com fallback de célula vazia, em `guardia/politica.py` |
-| Banco de perguntas da v0.8 | Validador pronto; classificação das 9 perguntas da v0.7 pendente |
+| Banco de perguntas da v0.8 | 9 perguntas da v0.7 classificadas (8 de 12 células); faltam 27 para a meta de 36 |
+| Interface na ST7735 | Proposta: paisagem, letra tamanho 2; a confirmar na tela física |
 | Treino da Guardiã | **Ainda não realizado** |
 | Simulador de dados sintéticos (`sim-1.1`, fluxo-0.8) | Implementado e testado; `sim-1.0` mantido como histórico |
 | Divisão por participante (`split_v2`; `split_v1` histórico) | Implementada; sem vazamento (testado) |
@@ -115,6 +116,7 @@ coflume-guardian-ai/
 - [Simulador de dados sintéticos](docs/simulador.md)
 - [Contrato de fluxo da partida (fluxo-0.8)](docs/fluxo_partida.md)
 - [Plano do banco de questões](docs/banco_questoes.md)
+- [Interface da v0.8 na ST7735](docs/interface_st7735.md)
 - [Viabilidade embarcada](docs/viabilidade_embarcada.md)
 - [Reprodução do treinamento](docs/reproducao.md)
 - [Fluxo de trabalho Git](docs/fluxo_git.md)
