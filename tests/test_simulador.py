@@ -1,4 +1,7 @@
-"""Testes do simulador SINTÉTICO: formato, faixas, consistência e reprodutibilidade."""
+"""Testes do simulador SINTÉTICO: formato, faixas, consistência e reprodutibilidade.
+
+Os testes comuns rodam para sim-1.0 (histórico) e sim-1.1 (fluxo-0.8).
+"""
 
 import dataclasses
 import json
@@ -12,10 +15,11 @@ from guardia.dados import carregar
 from guardia.features import Resposta, entrada_valida, montar_entrada
 from guardia.simulador import (
     COLUNAS,
-    VERSAO_SIMULADOR,
+    PARAMETROS_POR_VERSAO,
     ParametrosSimulador,
     gerar_arquivo,
     para_csv,
+    parametros_da_versao,
     simular,
 )
 
@@ -23,12 +27,16 @@ N_TESTE = 1500
 SEMENTE = 2026
 
 
-@pytest.fixture(scope="module")
-def gerado(tmp_path_factory):
+@pytest.fixture(scope="module", params=sorted(PARAMETROS_POR_VERSAO))
+def gerado(request, tmp_path_factory):
     pasta = tmp_path_factory.mktemp("dados") / "sinteticos"
     caminho = pasta / "sessoes.csv"
-    manifesto = gerar_arquivo(caminho, N_TESTE, SEMENTE)
+    manifesto = gerar_arquivo(caminho, N_TESTE, SEMENTE, parametros_da_versao(request.param))
     return caminho, manifesto, carregar(caminho)
+
+
+def _versao(gerado) -> str:
+    return gerado[1]["versao_simulador"]
 
 
 # ---------------------------------------------------------------------------
@@ -43,7 +51,8 @@ class TestFormato:
     def test_fonte_e_versao(self, gerado):
         _, _, df = gerado
         assert set(df["fonte"]) == {"SINTETICO"}
-        assert set(df["versao_simulador"]) == {VERSAO_SIMULADOR}
+        assert set(df["versao_simulador"]) == {_versao(gerado)}
+        assert gerado[1]["politica_coleta"] == "exploratoria-uniforme"
 
     def test_manifesto(self, gerado):
         caminho, manifesto, df = gerado
@@ -117,9 +126,15 @@ class TestFaixas:
         assert set(df["nivel_inicial"]) == {0, 1, 2}
         assert set(df["acertou"]) == {0, 1}
         assert set(df["resp_usou_dica"]) == {0, 1}
-        assert set(df["tipo"]) == {"principal", "reforco"}
-        # há linhas com cada combinação nível inicial × nível da questão
-        assert df.groupby(["nivel_inicial", "nivel_candidato"]).size().min() >= 30
+        combos = df.groupby(["nivel_inicial", "nivel_candidato"]).size()
+        if _versao(gerado) == "sim-1.0":
+            assert set(df["tipo"]) == {"principal", "reforco"}
+            assert len(combos) == 9
+        else:
+            # fluxo-0.8: só as combinações da faixa ±1 (Explorador nunca recebe Mestre)
+            assert set(df["tipo"]) == {"principal"}
+            assert set(combos.index) == {(i, n) for i in range(3) for n in range(3) if abs(i - n) <= 1}
+        assert combos.min() >= 30
 
 
 class TestEstruturaDaSessao:
@@ -150,6 +165,9 @@ class TestEstruturaDaSessao:
 
     def test_reforco_segue_erro_na_mesma_categoria(self, gerado):
         _, _, df = gerado
+        if _versao(gerado) != "sim-1.0":
+            assert not (df["tipo"] == "reforco").any()
+            return
         anterior = df.groupby("participante_id").shift(1)
         ref = df["tipo"] == "reforco"
         assert (anterior.loc[ref, "tipo"] == "principal").all()
@@ -165,7 +183,10 @@ class TestEstruturaDaSessao:
     def test_tamanho_da_sessao(self, gerado):
         _, _, df = gerado
         tam = df.groupby("participante_id").size()
-        assert tam.min() >= 3 and tam.max() <= 6
+        if _versao(gerado) == "sim-1.0":
+            assert tam.min() >= 3 and tam.max() <= 6
+        else:
+            assert (tam == 3).all()
 
 
 # ---------------------------------------------------------------------------
@@ -254,11 +275,12 @@ class TestReprodutibilidade:
 
     def test_parametros_ficam_no_manifesto(self, gerado):
         _, manifesto, _ = gerado
-        assert manifesto["parametros"] == json.loads(json.dumps(dataclasses.asdict(ParametrosSimulador())))
+        esperado = dataclasses.asdict(parametros_da_versao(manifesto["versao_simulador"]))
+        assert manifesto["parametros"] == json.loads(json.dumps(esperado))
 
     def test_csv_le_de_volta_os_mesmos_float32(self, gerado):
         caminho, _, df = gerado
-        linhas = simular(N_TESTE, SEMENTE)
+        linhas = simular(N_TESTE, SEMENTE, parametros_da_versao(_versao(gerado)))
         for col in ("taxa_acerto_sessao", "tempo_medio_norm"):
             original = np.array([r[col] for r in linhas], dtype=np.float32)
             assert np.array_equal(original, df[col].to_numpy(dtype=np.float32))

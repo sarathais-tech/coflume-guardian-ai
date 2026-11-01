@@ -21,7 +21,6 @@ from guardia.features import vetorizar, Entrada
 from guardia.simulador import gerar_arquivo
 from tests.conftest import RAIZ
 
-SPLIT_VERSIONADO = RAIZ / "splits" / "split_v1.json"
 
 
 @pytest.fixture(scope="module")
@@ -114,16 +113,25 @@ def test_matriz_usa_so_as_features_do_contrato(dados):
 # Arquivo versionado splits/split_v1.json
 # ---------------------------------------------------------------------------
 
-@pytest.mark.skipif(not SPLIT_VERSIONADO.exists(), reason="splits/split_v1.json ainda não gerado")
+SPLITS_VERSIONADOS = [
+    # arquivo, versão do simulador, participantes, (treino, validação, teste)
+    ("split_v1.json", "sim-1.0", 3000, (2100, 450, 450)),
+    ("split_v2.json", "sim-1.1", 4000, (2800, 600, 600)),
+]
+
+
+@pytest.mark.parametrize("arquivo, versao_sim, n, tamanhos", SPLITS_VERSIONADOS)
 class TestSplitVersionado:
-    def test_estrutura_e_sem_vazamento(self):
-        s = carregar_split(SPLIT_VERSIONADO)
+    def test_estrutura_e_sem_vazamento(self, arquivo, versao_sim, n, tamanhos):
+        s = carregar_split(RAIZ / "splits" / arquivo)
+        assert s["versao"] == arquivo.removesuffix(".json")
         assert s["fonte"] == "SINTETICO"
         assert s["semente"] == 2026
-        assert s["n_participantes"] == {"treino": 2100, "validacao": 450, "teste": 450}
+        assert s["dados"]["versao_simulador"] == versao_sim
+        assert s["n_participantes"] == dict(zip(CONJUNTOS, tamanhos))
         assert {k: len(v) for k, v in s["participantes"].items()} == s["n_participantes"]
 
-    def test_reproduzivel_a_partir_dos_ids(self):
+    def test_reproduzivel_a_partir_dos_ids(self, arquivo, versao_sim, n, tamanhos):
         """A divisão depende só dos IDs e da semente, não do conteúdo do CSV."""
-        s = carregar_split(SPLIT_VERSIONADO)
-        assert dividir_participantes(np.arange(3000), s["semente"]) == s["participantes"]
+        s = carregar_split(RAIZ / "splits" / arquivo)
+        assert dividir_participantes(np.arange(n), s["semente"]) == s["participantes"]

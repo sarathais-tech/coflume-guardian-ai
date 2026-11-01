@@ -22,6 +22,16 @@ com o histórico ANTERIOR à questão, exatamente como no runtime embarcado.
 ``p_real`` é a probabilidade verdadeira de acerto no momento da escolha da
 questão (antes de se saber se haverá dica ou tempo esgotado). Só existe em dados
 sintéticos e NUNCA pode ser usada como feature.
+
+Versões (ver docs/simulador.md):
+
+- ``sim-1.0``: 3 principais + reforço após erro, nível livre (histórico; ADR 0008).
+- ``sim-1.1``: fluxo-0.8 — exatamente 3 perguntas, 1ª no nível escolhido,
+  2ª e 3ª na faixa ±1, sem reforço, sem ganho após erro (ADR 0009).
+
+Em ambas, o nível é SORTEADO (política exploratória de coleta). A política
+adaptativa do cofre, que escolhe o nível pela previsão da Guardiã, está em
+``guardia/politica.py`` e não é usada para gerar dados de treino.
 """
 
 from __future__ import annotations
@@ -38,11 +48,16 @@ from pathlib import Path
 import numpy as np
 
 from guardia import contrato as C
+from guardia import politica
 from guardia.features import Resposta, montar_entrada
 
-VERSAO_SIMULADOR = "sim-1.0"
+VERSAO_SIMULADOR = "sim-1.1"  # versão padrão
 SEMENTE_PADRAO = 2026
-N_PARTICIPANTES_PADRAO = 3000
+POLITICA_COLETA = "exploratoria-uniforme"
+
+# versão -> (nome do conjunto, participantes padrão)
+CONJUNTOS_POR_VERSAO = {"sim-1.0": ("sessoes_v1", 3000), "sim-1.1": ("sessoes_v2", 4000)}
+N_PARTICIPANTES_PADRAO = CONJUNTOS_POR_VERSAO[VERSAO_SIMULADOR][1]
 
 TIPO_PRINCIPAL = "principal"
 TIPO_REFORCO = "reforco"
@@ -77,7 +92,10 @@ class ParametrosSimulador:
     """Parâmetros do simulador. Justificativas em docs/simulador.md.
 
     Nenhum valor foi ajustado para favorecer algum modelo (protocolo, seção 8).
+    Os valores padrão são os do ``sim-1.1``; use ``parametros_da_versao``.
     """
+
+    versao: str = "sim-1.1"
 
     # População
     prob_nivel_inicial: tuple[float, float, float] = (0.40, 0.35, 0.25)
@@ -91,7 +109,7 @@ class ParametrosSimulador:
     discriminacao: float = 1.2
     acerto_ao_acaso: float = 0.25
     efeito_dica: float = 0.8
-    ganho_feedback_apos_erro: float = 0.3
+    ganho_feedback_apos_erro: float = 0.0
 
     # Uso de dica
     dica_intercepto: float = -1.2
@@ -108,9 +126,14 @@ class ParametrosSimulador:
 
     # Fluxo da partida (ver docs/simulador.md, seção 3)
     n_principais: int = 3
+    reforco_apos_erro: bool = False
     prob_reforco_mesmo_nivel: float = 0.5
+    primeira_no_nivel_inicial: bool = True       # fluxo-0.8
+    faixa_nivel: int | None = politica.FAIXA_NIVEL  # None = qualquer nível (sim-1.0)
 
     def __post_init__(self) -> None:
+        if not self.versao:
+            raise ValueError("versao é obrigatória.")
         if abs(sum(self.prob_nivel_inicial) - 1.0) > 1e-9:
             raise ValueError("prob_nivel_inicial deve somar 1.")
         if not 1 <= self.n_principais <= C.N_CATEGORIAS:
@@ -121,6 +144,26 @@ class ParametrosSimulador:
             raise ValueError("acerto_ao_acaso deve estar em [0, 1).")
         if self.tempo_limite_s <= 0:
             raise ValueError("tempo_limite_s deve ser positivo.")
+        if self.faixa_nivel is not None and self.faixa_nivel < 0:
+            raise ValueError("faixa_nivel deve ser None ou >= 0.")
+
+
+PARAMETROS_POR_VERSAO = {
+    "sim-1.0": ParametrosSimulador(
+        versao="sim-1.0",
+        ganho_feedback_apos_erro=0.3,
+        reforco_apos_erro=True,
+        primeira_no_nivel_inicial=False,
+        faixa_nivel=None,
+    ),
+    "sim-1.1": ParametrosSimulador(versao="sim-1.1"),
+}
+
+
+def parametros_da_versao(versao: str) -> ParametrosSimulador:
+    if versao not in PARAMETROS_POR_VERSAO:
+        raise ValueError(f"Versão desconhecida: {versao!r}. Use uma de {sorted(PARAMETROS_POR_VERSAO)}.")
+    return PARAMETROS_POR_VERSAO[versao]
 
 
 def _sigmoide(z: float) -> float:
@@ -197,7 +240,7 @@ class _Participante:
         self.linhas.append(
             {
                 "fonte": "SINTETICO",
-                "versao_simulador": VERSAO_SIMULADOR,
+                "versao_simulador": p.versao,
                 "participante_id": self.pid,
                 "ordem": len(self.historico),
                 "tipo": tipo,
@@ -231,15 +274,22 @@ class _Participante:
     def jogar(self) -> list[dict]:
         p, rng = self.p, self.rng
         categorias = [int(c) for c in rng.permutation(C.N_CATEGORIAS)[: p.n_principais]]
+        ini = self.nivel_inicial
         for k, categoria in enumerate(categorias):
-            if k == 0:
-                # docs/features.md, seção 4: na 1ª questão, só nivel_inicial ou um abaixo.
-                opcoes = sorted({max(self.nivel_inicial - 1, 0), self.nivel_inicial})
+            # Política de COLETA exploratória: o nível é SORTEADO entre os permitidos.
+            # Não é a política adaptativa do cofre (guardia.politica.escolher_nivel).
+            if k == 0 and p.primeira_no_nivel_inicial:
+                nivel = politica.niveis_permitidos(0, ini)[0]  # fluxo-0.8: nível escolhido
+            elif k == 0:
+                # sim-1.0: nivel_inicial ou um abaixo (sequência de sorteios preservada)
+                opcoes = sorted({max(ini - 1, 0), ini})
                 nivel = int(rng.choice(opcoes))
+            elif p.faixa_nivel is None:
+                nivel = int(rng.integers(C.N_NIVEIS))  # sim-1.0: qualquer nível
             else:
-                # Política de COLETA exploratória (ADR 0008): nível uniforme.
-                nivel = int(rng.integers(C.N_NIVEIS))
-            if not self.responder(categoria, nivel, TIPO_PRINCIPAL):
+                # sim-1.1: mesmos níveis que o cofre pode consultar (faixa ±1)
+                nivel = int(rng.choice(politica.niveis_permitidos(1, ini, p.faixa_nivel)))
+            if not self.responder(categoria, nivel, TIPO_PRINCIPAL) and p.reforco_apos_erro:
                 mesmo = rng.random() < p.prob_reforco_mesmo_nivel
                 nivel_ref = nivel if mesmo else max(nivel - 1, 0)
                 self.responder(categoria, nivel_ref, TIPO_REFORCO)
@@ -254,7 +304,7 @@ def simular(
     """Gera as linhas de ``n_participantes`` sessões, em ordem de participante e questão."""
     if n_participantes < 1:
         raise ValueError("n_participantes deve ser positivo.")
-    p = parametros or ParametrosSimulador()
+    p = parametros or parametros_da_versao(VERSAO_SIMULADOR)
     linhas: list[dict] = []
     for pid in range(n_participantes):
         linhas.extend(_Participante(pid, semente, p).jogar())
@@ -303,7 +353,7 @@ def gerar_arquivo(
         raise ValueError(
             f"Dados SINTÉTICOS só podem ser gravados numa pasta 'sinteticos' (recebido: {caminho.parent})."
         )
-    p = parametros or ParametrosSimulador()
+    p = parametros or parametros_da_versao(VERSAO_SIMULADOR)
     conteudo = para_csv(simular(n_participantes, semente, p))
     caminho.parent.mkdir(parents=True, exist_ok=True)
     caminho.write_bytes(conteudo)
@@ -314,7 +364,9 @@ def gerar_arquivo(
         "ia": "Guardiã IA",
         "fonte": "SINTETICO",
         "arquivo": caminho.name,
-        "versao_simulador": VERSAO_SIMULADOR,
+        "versao_simulador": p.versao,
+        "politica_coleta": POLITICA_COLETA,
+        "fluxo": politica.VERSAO_FLUXO if p.versao == "sim-1.1" else None,
         "semente": semente,
         "n_participantes": n_participantes,
         "n_linhas": n_linhas,

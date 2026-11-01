@@ -181,7 +181,12 @@ def verificar_sem_vazamento(divisao: dict[str, list[int]]) -> None:
                 raise ValueError(f"Vazamento: {len(comum)} participante(s) em '{a}' e '{b}', ex.: {sorted(comum)[:5]}")
 
 
-def criar_split(caminho_dados: Path, df: pd.DataFrame | None = None, semente: int = SEMENTE_DIVISAO) -> dict:
+def criar_split(
+    caminho_dados: Path,
+    df: pd.DataFrame | None = None,
+    semente: int = SEMENTE_DIVISAO,
+    versao: str = "split_v1",
+) -> dict:
     """Monta o dicionário do arquivo de divisão para um CSV de dados."""
     caminho_dados = Path(caminho_dados)
     df = carregar(caminho_dados) if df is None else df
@@ -190,7 +195,7 @@ def criar_split(caminho_dados: Path, df: pd.DataFrame | None = None, semente: in
     verificar_sem_vazamento(divisao)
     linhas = {k: int(df[COLUNA_GRUPO].isin(v).sum()) for k, v in divisao.items()}
     return {
-        "versao": "split_v1",
+        "versao": versao,
         "protocolo": "docs/protocolo_avaliacao.md",
         "fonte": fonte,
         "metodo": "GroupShuffleSplit em duas etapas (teste, depois validação) sobre participante_id",

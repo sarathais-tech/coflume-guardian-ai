@@ -1,13 +1,13 @@
 """Gera o conjunto de dados SINTÉTICOS da Guardiã IA e seu resumo descritivo.
 
 Uso:
-    python -m ferramentas.gerar_sinteticos --semente 2026
-    python -m ferramentas.gerar_sinteticos --semente 2026 --participantes 3000
+    python -m ferramentas.gerar_sinteticos --semente 2026                    # sim-1.1 -> sessoes_v2
+    python -m ferramentas.gerar_sinteticos --versao sim-1.0 --semente 2026   # histórico -> sessoes_v1
 
-Saídas (padrão):
-    dados/sinteticos/sessoes_v1.csv            (não versionado; regenerável)
-    dados/sinteticos/sessoes_v1.manifest.json  (semente, parâmetros, sha256, ambiente)
-    resultados/sinteticos/sessoes_v1_resumo.md (estatísticas descritivas [SINTÉTICO])
+Saídas (padrão, <conjunto> = sessoes_v2 para sim-1.1 e sessoes_v1 para sim-1.0):
+    dados/sinteticos/<conjunto>.csv            (não versionado; regenerável)
+    dados/sinteticos/<conjunto>.manifest.json  (semente, parâmetros, sha256, ambiente)
+    resultados/sinteticos/<conjunto>_resumo.md (estatísticas descritivas [SINTÉTICO])
 """
 
 from __future__ import annotations
@@ -19,11 +19,16 @@ import numpy as np
 import pandas as pd
 
 from guardia.dados import carregar
-from guardia.simulador import N_PARTICIPANTES_PADRAO, SEMENTE_PADRAO, gerar_arquivo
+from guardia.politica import desbloqueio_referencia
+from guardia.simulador import (
+    CONJUNTOS_POR_VERSAO,
+    SEMENTE_PADRAO,
+    VERSAO_SIMULADOR,
+    gerar_arquivo,
+    parametros_da_versao,
+)
 
 RAIZ = Path(__file__).resolve().parents[1]
-CSV_PADRAO = RAIZ / "dados" / "sinteticos" / "sessoes_v1.csv"
-RESUMO_PADRAO = RAIZ / "resultados" / "sinteticos" / "sessoes_v1_resumo.md"
 
 NOMES_NIVEL = ("Explorador", "Desafiante", "Mestre")
 NOMES_CATEGORIA = ("Matemática", "Português", "Lógica", "Conhecimentos gerais")
@@ -37,12 +42,15 @@ def resumo(df: pd.DataFrame, manifesto: dict) -> str:
     por_part = df.groupby("participante_id").size()
     primeira = df[df["ordem"] == 0]
     L = [
-        "# [SINTÉTICO] Resumo do conjunto `sessoes_v1`",
+        f"# [SINTÉTICO] Resumo do conjunto `{Path(manifesto['arquivo']).stem}`",
         "",
         "> Estatísticas descritivas de dados **gerados pelo simulador**. Não representam crianças reais "
         "e não comprovam eficácia educacional.",
         "",
-        f"- **Versão do simulador:** {manifesto['versao_simulador']}",
+        f"- **Versão do simulador:** {manifesto['versao_simulador']}"
+        + (f" (fluxo da partida: {manifesto['fluxo']})" if manifesto.get("fluxo") else ""),
+        f"- **Política de geração dos níveis:** {manifesto.get('politica_coleta', 'exploratoria-uniforme')} "
+        "(sorteio entre os níveis permitidos; **não** é a política adaptativa do cofre)",
         f"- **Semente:** {manifesto['semente']}",
         f"- **SHA-256 do CSV:** `{manifesto['sha256']}`",
         f"- **Ambiente:** Python {manifesto['ambiente']['python']}, numpy {manifesto['ambiente']['numpy']}",
@@ -90,6 +98,8 @@ def resumo(df: pd.DataFrame, manifesto: dict) -> str:
         s = df[df["categoria"] == c]["acertou"]
         L.append(f"| {NOMES_CATEGORIA[c]} | {_pct(s.mean())} | {len(s)} |")
 
+    L += _secoes_fluxo(df)
+
     L += ["", "## Consistência do oráculo (`p_real` × acerto observado)", "",
           "Se `p_real` é a probabilidade verdadeira, a taxa de acerto em cada faixa deve ficar próxima da média de `p_real`.", "",
           "| Faixa de `p_real` | Linhas | Média de `p_real` | Acerto observado |", "|---|---|---|---|"]
@@ -102,17 +112,49 @@ def resumo(df: pd.DataFrame, manifesto: dict) -> str:
     return "\n".join(L)
 
 
+def _secoes_fluxo(df: pd.DataFrame) -> list[str]:
+    """Seções extras quando todas as partidas têm exatamente 3 perguntas (fluxo-0.8)."""
+    tam = df.groupby("participante_id").size()
+    if not (tam == 3).all():
+        return []
+    L = ["", "## Nível sorteado por posição na partida", "",
+         "Distribuição gerada pela política **exploratória** de coleta. No cofre, a Guardiã escolherá o nível.", "",
+         "| Pergunta | Nível inicial | " + " | ".join(NOMES_NIVEL) + " |", "|---|---|---|---|---|"]
+    for ordem in range(3):
+        for ini in range(3):
+            s = df[(df["ordem"] == ordem) & (df["nivel_inicial"] == ini)]["nivel_candidato"]
+            cel = [f"{_pct((s == n).mean())}" if (s == n).any() else "—" for n in range(3)]
+            L.append(f"| {ordem + 1} | {NOMES_NIVEL[ini]} | " + " | ".join(cel) + " |")
+    iguais = (df["taxa_acerto_categoria"] == df["taxa_acerto_sessao"]).mean()
+    acertos = df.groupby("participante_id")["acertou"].apply(lambda s: desbloqueio_referencia(list(s.astype(bool))))
+    L += ["", "## Partidas", "", "| Medida | Valor |", "|---|---|",
+          f"| Categorias distintas nas 3 perguntas | {_pct((df.groupby('participante_id')['categoria'].nunique() == 3).mean())} |",
+          f"| Linhas com `taxa_acerto_categoria` = `taxa_acerto_sessao` | {_pct(iguais)} |",
+          f"| Partidas com ≥ 2 acertos sob a política exploratória | {_pct(acertos.mean())} |",
+          "",
+          "> A taxa de partidas com 2 ou mais acertos acima vem do **sorteio** de níveis usado para gerar dados. "
+          "Ela **não** é a taxa de desbloqueio esperada da v0.8 nem da v0.7; essas serão estimadas na "
+          "simulação de políticas (protocolo, seção 7), também com dados sintéticos."]
+    return L
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--versao", default=VERSAO_SIMULADOR, choices=sorted(CONJUNTOS_POR_VERSAO))
     ap.add_argument("--semente", type=int, default=SEMENTE_PADRAO)
-    ap.add_argument("--participantes", type=int, default=N_PARTICIPANTES_PADRAO)
-    ap.add_argument("--saida", type=Path, default=CSV_PADRAO)
-    ap.add_argument("--resumo", type=Path, default=RESUMO_PADRAO,
+    ap.add_argument("--participantes", type=int, default=None, help="padrão: 3000 (sim-1.0) ou 4000 (sim-1.1)")
+    ap.add_argument("--saida", type=Path, default=None)
+    ap.add_argument("--resumo", type=Path, default=None,
                     help="Arquivo Markdown do resumo; use --sem-resumo para não gerar.")
     ap.add_argument("--sem-resumo", action="store_true")
     args = ap.parse_args(argv)
 
-    manifesto = gerar_arquivo(args.saida, args.participantes, args.semente)
+    conjunto, n_padrao = CONJUNTOS_POR_VERSAO[args.versao]
+    args.participantes = args.participantes or n_padrao
+    args.saida = args.saida or RAIZ / "dados" / "sinteticos" / f"{conjunto}.csv"
+    args.resumo = args.resumo or RAIZ / "resultados" / "sinteticos" / f"{conjunto}_resumo.md"
+
+    manifesto = gerar_arquivo(args.saida, args.participantes, args.semente, parametros_da_versao(args.versao))
     df = carregar(args.saida)  # valida o que acabou de ser gerado
     print(f"[SINTÉTICO] {manifesto['n_linhas']} linhas de {manifesto['n_participantes']} participantes")
     print(f"Semente {manifesto['semente']} · {manifesto['versao_simulador']} · sha256 {manifesto['sha256'][:16]}…")
