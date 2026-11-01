@@ -162,3 +162,14 @@ def test_mlp_pipeline_curto(base):
     assert mlp["equivalencia_keras_formato_contrato_max"] < 1e-5
     assert "mlp_menos_arvore" in res["comparacoes_validacao_preliminares"]
     assert res["ambiente"]["tensorflow"]
+
+
+def test_relatorio_de_validacao(base, tmp_path):
+    from ferramentas import relatorio_treino
+
+    csv, split = base
+    treinar.main(["--dados", str(csv), "--split", str(split), "--saida", str(tmp_path), "--modelos", *SKLEARN])
+    assert relatorio_treino.main([str(tmp_path / "validacao.json"), "--sem-figura"]) == 0
+    md = (tmp_path / "relatorio_validacao.md").read_text(encoding="utf-8")
+    assert md.startswith("# [SINTÉTICO]") and "teste continua lacrado" in md and "oráculo" in md
+    assert "Árvore de decisão − Baseline ingênuo" in md
