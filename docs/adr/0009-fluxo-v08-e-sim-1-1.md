@@ -29,6 +29,8 @@ Com dificuldade fixa, a previsão da Guardiã não altera nada na partida. Os da
 7. **Política de coleta exploratória** (sorteio uniforme) restrita aos **mesmos níveis permitidos** no cofre (`politica.niveis_permitidos`). A política adaptativa (alvo de 0,70) **não** é usada para gerar dados de treino, porque isso seria circular e criaria viés de seleção.
 8. **Tolerância de empate de 1e-6** na escolha do nível, para que arredondamentos de ponto flutuante não decidam a escolha.
 9. **Contrato de integração 1.0.0 inalterado**: as features e a API continuam as mesmas.
+10. **Célula vazia no banco** (revisão 2 do fluxo): a Guardiã avalia só os níveis disponíveis (permitidos e com pergunta). Se a categoria não tiver nenhum, usa-se a próxima categoria não usada. O nível nunca sai da faixa, e a previsão registrada é sempre a do nível apresentado. Um banco que não sustente todas as partidas é recusado antes da feira por `ferramentas.validar_banco`.
+11. **Dados e divisão do treino da v0.8:** `sessoes_v2` e `split_v2`, registrados no [adendo 01 ao protocolo](../protocolo_adendo_01.md), sem mudança nos critérios de avaliação.
 
 ## Consequências
 

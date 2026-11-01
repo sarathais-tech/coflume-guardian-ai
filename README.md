@@ -47,7 +47,9 @@ Detalhes em [`docs/arquitetura.md`](docs/arquitetura.md).
 | Especificação das features (incluindo primeira questão) | Definida e testada |
 | Runtime C++ da MLP float32 | Implementado, equivalência com Python testada no PC |
 | Teste de viabilidade no ESP32-S3 (pesos aleatórios) | **Pronto para rodar na placa**, resultados pendentes |
-| Contrato de fluxo da partida `fluxo-0.8` | Proposto e aprovado; política de referência em `guardia/politica.py` |
+| Contrato de fluxo da partida `fluxo-0.8` (revisão 2) | Arquitetura aprovada; política de referência, com fallback de célula vazia, em `guardia/politica.py` |
+| Banco de perguntas da v0.8 | Validador pronto; classificação das 9 perguntas da v0.7 pendente |
+| Treino da Guardiã | **Ainda não realizado** |
 | Simulador de dados sintéticos (`sim-1.1`, fluxo-0.8) | Implementado e testado; `sim-1.0` mantido como histórico |
 | Divisão por participante (`split_v2`; `split_v1` histórico) | Implementada; sem vazamento (testado) |
 | Treino e avaliação (MLP × árvore) | Próxima etapa |
@@ -83,6 +85,7 @@ coflume-guardian-ai/
 │   ├── mlp.py                # construção e treino da MLP (Keras)
 │   ├── simulador.py          # participantes e sessões SINTÉTICOS (política exploratória)
 │   ├── politica.py           # política adaptativa do cofre (referência do fluxo-0.8)
+│   ├── banco.py              # validação do banco de perguntas (tela ST7735)
 │   ├── dados.py              # carregamento, validação e divisão por participante
 │   └── exportar/mlp_cpp.py   # gera guardia_modelo.h
 ├── embarcado/
@@ -95,6 +98,7 @@ coflume-guardian-ai/
 │   ├── sinteticos/           # gerados por script (não versionados)
 │   └── reais/                # NUNCA versionados
 ├── splits/                   # divisão treino/validação/teste (versionada)
+├── questoes/                 # modelo do banco de perguntas da v0.8
 ├── resultados/
 │   ├── sinteticos/           # métricas obtidas com dados simulados
 │   └── reais/                # métricas com dados reais (se houver piloto)
@@ -106,7 +110,7 @@ coflume-guardian-ai/
 - [Arquitetura](docs/arquitetura.md)
 - [Contrato de integração com o firmware](docs/contrato_integracao.md)
 - [Especificação das features e da primeira questão](docs/features.md)
-- [Protocolo de avaliação (pré-registrado)](docs/protocolo_avaliacao.md)
+- [Protocolo de avaliação (pré-registrado)](docs/protocolo_avaliacao.md) e [adendo 01: dados e divisão da v0.8](docs/protocolo_adendo_01.md)
 - [Dados: sintéticos × reais](docs/dados.md)
 - [Simulador de dados sintéticos](docs/simulador.md)
 - [Contrato de fluxo da partida (fluxo-0.8)](docs/fluxo_partida.md)

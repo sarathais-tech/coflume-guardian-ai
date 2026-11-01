@@ -23,7 +23,7 @@ Para os testes de equivalência C++ é preciso ter `g++` ou `clang++` no PATH. N
 | 1. Testes do núcleo | `pytest` | relatório no terminal | **Disponível** |
 | 2. Bancada com pesos aleatórios | `python -m ferramentas.gerar_bancada --semente 2026` | `embarcado/bancada_ia/*.h` | **Disponível** |
 | 3. Gerar dados sintéticos (`sim-1.1`) | `python -m ferramentas.gerar_sinteticos --semente 2026` | `dados/sinteticos/sessoes_v2.csv` + manifesto e resumo | **Disponível** ([simulador.md](simulador.md)) |
-| 4. Dividir por participante | `python -m ferramentas.dividir` | `splits/split_v2.json` (versionado) | **Disponível** |
+| 4. Dividir por participante | `python -m ferramentas.dividir` | `splits/split_v2.json` (versionado; ver [adendo 01](protocolo_adendo_01.md)) | **Disponível** |
 | 5. Treinar modelos | `python -m ferramentas.treinar --fonte sint` | `modelos/<id>/` | Próxima etapa |
 | 6. Avaliar (teste lacrado) | `python -m ferramentas.avaliar --fonte sint` | `resultados/sinteticos/<id>/` | Próxima etapa |
 | 7. Exportar modelo aprovado | `python -m ferramentas.exportar --modelo <id>` | `release/` | Próxima etapa |

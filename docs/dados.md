@@ -52,7 +52,7 @@ Implementada em `guardia/dados.py`, conforme o [protocolo](protocolo_avaliacao.m
 - A divisão é por `participante_id`: 70% / 15% / 15% dos **participantes**, semente 2026.
 - Como o `GroupShuffleSplit` faz uma divisão por vez, ela é feita em duas etapas: primeiro o teste, depois a validação dentro do restante. Os tamanhos são inteiros (2.100 / 450 / 450 para 3.000 participantes).
 - O resultado fica versionado em `splits/`, com o SHA-256 dos IDs e do CSV:
-  - `split_v2.json` → `sessoes_v2` (`sim-1.1`, fluxo-0.8): 2.800 / 600 / 600. **Atual.**
+  - `split_v2.json` → `sessoes_v2` (`sim-1.1`, fluxo-0.8): 2.800 / 600 / 600. **Atual**; usado no treino da v0.8 conforme o [adendo 01 ao protocolo](protocolo_adendo_01.md).
   - `split_v1.json` → `sessoes_v1` (`sim-1.0`): 2.100 / 450 / 450. Histórico.
 - O teste é lacrado: `conjunto(df, split, "teste")` lança `ConjuntoLacradoError` sem `abrir_teste=True`.
 - O split só se aplica a dados com exatamente os mesmos participantes e a mesma fonte.
