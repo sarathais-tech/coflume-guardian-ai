@@ -5,6 +5,8 @@ Uso:
     python -m ferramentas.validar_banco questoes/banco_v07.csv --orientacao paisagem --meta 5
     python -m ferramentas.validar_banco questoes/banco_v07.csv --escala 2 --escala-moldura 1 --linhas-cabecalho 2
     python -m ferramentas.validar_banco questoes/banco_v07.csv --relatorio resultados/banco/banco_v07.md
+    python -m ferramentas.validar_banco questoes/banco_v08.csv --orientacao paisagem --escala 2 --escala-moldura 1 \
+        --linhas-cabecalho 2 --linhas-rodape 0 --sem-separador --margem-px 16
 
 Formato do CSV: questoes/banco_modelo.csv. Saída 0 se nenhuma pergunta for inválida.
 """
@@ -28,12 +30,14 @@ def main(argv: list[str] | None = None) -> int:
                     help="linhas do cabeçalho: nível/progresso e, se houver, barra do temporizador")
     ap.add_argument("--sem-separador", action="store_true", help="sem linha em branco antes das alternativas")
     ap.add_argument("--linhas-rodape", type=int, default=1, help="linhas do rodapé (0 se a dica for indicada no cabeçalho)")
+    ap.add_argument("--margem-px", type=int, default=0, help="folga mínima abaixo do conteúdo (ex.: 16 = 1 linha em tamanho 2)")
     ap.add_argument("--meta", type=int, default=3, help="perguntas aptas desejadas por célula (padrão 3)")
     ap.add_argument("--relatorio", type=Path, default=None)
     args = ap.parse_args(argv)
 
     kw = dict(escala=args.escala, escala_moldura=args.escala_moldura, linhas_cabecalho=args.linhas_cabecalho,
-              linhas_rodape=args.linhas_rodape, linhas_separadoras=0 if args.sem_separador else 1)
+              linhas_rodape=args.linhas_rodape, linhas_separadoras=0 if args.sem_separador else 1,
+              margem_px=args.margem_px)
     layout = LayoutTFT.paisagem(**kw) if args.orientacao == "paisagem" else LayoutTFT(**kw)
     r = analisar(carregar_banco(args.banco), layout, args.meta)
     md = relatorio_markdown(r, f"Classificação do banco `{args.banco.name}`")

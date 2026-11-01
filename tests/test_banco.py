@@ -83,6 +83,12 @@ class TestTela:
         # enunciado "Quanto e 2 + 3?" quebra em 2 linhas + separador (1) + 4 alternativas
         assert misto["pergunta"] == 3 * 8 + (2 + 1 + 4) * 16
 
+    def test_margem_de_seguranca(self, tmp_path):
+        caminho = gravar(tmp_path, [linha("T1")])  # pergunta ocupa 64 px em tamanho 1
+        assert analisar(carregar_banco(caminho), LayoutTFT(margem_px=96)).avaliacoes[0].situacao == APTA
+        a = analisar(carregar_banco(caminho), LayoutTFT(margem_px=97)).avaliacoes[0]
+        assert a.situacao == AJUSTAR and "margem de 97 px" in a.motivos[0]
+
     def test_cabecalho_com_temporizador_e_progresso(self, tmp_path):
         from guardia.banco import relatorio_markdown
         r = analisar(carregar_banco(gravar(tmp_path, [linha("T1")])), LayoutTFT(escala=2))

@@ -59,6 +59,11 @@ class LayoutTFT:
     linhas_rodape: int = 1      # "*=Dica"
     linhas_separadoras: int = 1  # espaço entre enunciado e alternativas
     escala_moldura: int | None = None
+    margem_px: int = 0           # folga mínima exigida abaixo do conteúdo
+
+    @property
+    def altura_util(self) -> int:
+        return self.altura_px - self.margem_px
 
     @property
     def esc_moldura(self) -> int:
@@ -80,7 +85,8 @@ class LayoutTFT:
         orient = "retrato" if self.altura_px >= self.largura_px else "paisagem"
         return (f"{self.largura_px}×{self.altura_px} px ({orient}), corpo tamanho {self.escala} "
                 f"({self.colunas} colunas), cabeçalho/rodapé tamanho {self.esc_moldura}, "
-                f"{self.linhas_cabecalho} linha(s) de cabeçalho")
+                f"{self.linhas_cabecalho} linha(s) de cabeçalho, {self.linhas_rodape} de rodapé, "
+                f"margem mínima de {self.margem_px} px")
 
     @property
     def colunas(self) -> int:
@@ -225,7 +231,11 @@ def avaliar(p: Pergunta, layout: LayoutTFT) -> Avaliacao:
         return Avaliacao(p, INVALIDA, motivos)
 
     alturas = altura_por_tela(p, layout)
-    ajustes = [f"tela de {tela} usa {h} de {layout.altura_px} px" for tela, h in alturas.items() if h > layout.altura_px]
+    ajustes = [
+        f"tela de {tela} usa {h} px; limite com margem de {layout.margem_px} px: {layout.altura_util} px"
+        if layout.margem_px else f"tela de {tela} usa {h} de {layout.altura_px} px"
+        for tela, h in alturas.items() if h > layout.altura_util
+    ]
     if not p.dica:
         ajustes.append("sem dica (a tecla * precisa de texto)")
     texto = " ".join([p.enunciado, p.dica, *p.alternativas.values()])
