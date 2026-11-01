@@ -47,7 +47,8 @@ Detalhes em [`docs/arquitetura.md`](docs/arquitetura.md).
 | Especificação das features (incluindo primeira questão) | Definida e testada |
 | Runtime C++ da MLP float32 | Implementado, equivalência com Python testada no PC |
 | Teste de viabilidade no ESP32-S3 (pesos aleatórios) | **Pronto para rodar na placa**, resultados pendentes |
-| Simulador de dados sintéticos | Próxima etapa |
+| Simulador de dados sintéticos (`sim-1.0`) | Implementado e testado; fluxo da partida a conferir com o firmware v0.7 |
+| Divisão por participante (`split_v1`) | Implementada; sem vazamento (testado) |
 | Treino e avaliação (MLP × árvore) | Próxima etapa |
 
 ## Início rápido
@@ -79,6 +80,8 @@ coflume-guardian-ai/
 │   ├── features.py           # cálculo das entradas (fonte da verdade)
 │   ├── inferencia_ref.py     # inferência de referência em numpy (float32)
 │   ├── mlp.py                # construção e treino da MLP (Keras)
+│   ├── simulador.py          # participantes e sessões SINTÉTICOS
+│   ├── dados.py              # carregamento, validação e divisão por participante
 │   └── exportar/mlp_cpp.py   # gera guardia_modelo.h
 ├── embarcado/
 │   ├── runtime/              # guardia_runtime.h (escrito à mão, versionado)
@@ -89,6 +92,7 @@ coflume-guardian-ai/
 ├── dados/
 │   ├── sinteticos/           # gerados por script (não versionados)
 │   └── reais/                # NUNCA versionados
+├── splits/                   # divisão treino/validação/teste (versionada)
 ├── resultados/
 │   ├── sinteticos/           # métricas obtidas com dados simulados
 │   └── reais/                # métricas com dados reais (se houver piloto)
@@ -102,6 +106,7 @@ coflume-guardian-ai/
 - [Especificação das features e da primeira questão](docs/features.md)
 - [Protocolo de avaliação (pré-registrado)](docs/protocolo_avaliacao.md)
 - [Dados: sintéticos × reais](docs/dados.md)
+- [Simulador de dados sintéticos](docs/simulador.md)
 - [Viabilidade embarcada](docs/viabilidade_embarcada.md)
 - [Reprodução do treinamento](docs/reproducao.md)
 - [Fluxo de trabalho Git](docs/fluxo_git.md)
