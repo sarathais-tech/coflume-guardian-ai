@@ -1,7 +1,7 @@
 # Viabilidade embarcada da MLP no ESP32-S3
 
 **Sketch:** `embarcado/bancada_ia/bancada_ia.ino` (v2) · **Bancada com a MLP treinada:** `embarcado/bancada_wokwi/` ([instruções](bancada_wokwi.md))
-**Situação (01/11/2026):** validado no PC com pesos aleatórios e com a MLP candidata treinada; **Wokwi e placa física pendentes**.
+**Situação (01/11/2026):** validado no PC com pesos aleatórios e com a MLP candidata treinada; **correção funcional aprovada no Wokwi** (`APROVADO_FUNCIONAL`); **latência na placa física pendente**.
 
 ## 1. Objetivo
 
@@ -106,7 +106,11 @@ Modelo `mlp8-sint-20261101-e6a4cf00` (13 → 8 → 1, 121 parâmetros, 556 bytes
 
 | Data | Modelo | Erro P máx. (aleat. / valid.) | Casos de entrada | Heap prever / montar | Resultado |
 |---|---|---|---|---|---|
-| _pendente_ | mlp8-sint-20261101-e6a4cf00 | | | | |
+| 01/11/2026 | mlp8-sint-20261101-e6a4cf00 | 1,19e-7 (máximo dos dois grupos)¹ | 46 de 46 | 0 / 0 bytes | **APROVADO_FUNCIONAL** |
+
+Executado manualmente por Sara Thais em wokwi.com. Equivalência, entradas e ausência de alocação: **APROVADO**; latência: `NAO_AVALIADO`. Relatório: [`resultados/embarcado/mlp8-sint-20261101-e6a4cf00_wokwi.md`](../resultados/embarcado/mlp8-sint-20261101-e6a4cf00_wokwi.md).
+
+¹ O monitor serial foi transcrito com o erro máximo geral; `criterio_equivalencia = APROVADO` garante que cada grupo ficou abaixo de 1e-5. A latência simulada **não** representa a placa física e não entra no veredito.
 
 ### 5.4 ESP32-S3 N16R8 (placa física)
 

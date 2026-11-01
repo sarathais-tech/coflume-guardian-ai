@@ -93,6 +93,8 @@ O mesmo `sketch.ino`, compilado no PC com uma imitação da API do Arduino (`tes
 
 No Wokwi espera-se o mesmo resultado funcional. Diferenças da ordem de 1e-7 são normais em `float32`.
 
+**Execução registrada (01/11/2026):** a bancada foi executada no wokwi.com e terminou com `BANCADA,fim,ok` e `resultado = APROVADO_FUNCIONAL`. O erro máximo foi de 1,1920929e-7, com features idênticas, 46 de 46 casos de entrada e 0 byte de variação do heap. Relatório completo e limitações em [`resultados/embarcado/mlp8-sint-20261101-e6a4cf00_wokwi.md`](../resultados/embarcado/mlp8-sint-20261101-e6a4cf00_wokwi.md).
+
 ## 5. Se algo der errado
 
 | Sintoma | Causa provável |
