@@ -112,8 +112,8 @@ O formato exato da linha será fixado na integração com o firmware e convertid
 
 ## 7. Situação da Guardiã e o que este fluxo não afirma
 
-- **A Guardiã ainda não foi treinada.** Existem o pipeline, os dados sintéticos (`sessoes_v2`) e a divisão por participante (`split_v2`). O treino e a avaliação são a próxima etapa.
-- Quando for treinada, a primeira versão usará **apenas dados sintéticos**. Ela **não terá sido validada com crianças reais**, e isso deve ser dito sempre que o modelo for apresentado.
+- **Situação em 01/11/2026:** a Guardiã foi treinada e avaliada **em validação**, com **dados sintéticos** (`sessoes_v2`, execução 41329660286 do CI; ver [`treino.md`](treino.md)). O conjunto de teste **continua lacrado** e nenhum modelo foi liberado para produção.
+- Ela **não foi validada com crianças reais**, e isso deve ser dito sempre que o modelo for apresentado.
 - Taxas de desbloqueio e porcentagens de "zona ideal" vindas do simulador são resultados **[SINTÉTICO]** e não comprovam eficácia educacional.
 
 ## Histórico de revisões
@@ -121,4 +121,5 @@ O formato exato da linha será fixado na integração com o firmware e convertid
 | Revisão | Data | Mudança |
 |---|---|---|
 | 1 | 01/11/2026 | Versão inicial do fluxo-0.8 |
+| 3 | 01/11/2026 | Seção 7 atualizada após o treino em validação (dados sintéticos; teste lacrado) |
 | 2 | 01/11/2026 | Seção 7 corrigida (a Guardiã ainda não foi treinada); fallback de célula vazia (seção 3.1) com nível sempre dentro da faixa; previsão registrada sempre a do nível apresentado; campos de log ampliados |

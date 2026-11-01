@@ -52,7 +52,7 @@ Detalhes em [`docs/arquitetura.md`](docs/arquitetura.md).
 | Interface na ST7735 | Proposta: paisagem, letra tamanho 2; a confirmar na tela física |
 | Simulador de dados sintéticos (`sim-1.1`, fluxo-0.8) | Implementado e testado; `sim-1.0` mantido como histórico |
 | Divisão por participante (`split_v2`; `split_v1` histórico) | Implementada; sem vazamento (testado) |
-| Treino e avaliação em validação | Ver `resultados/sinteticos/treino_v2/` (teste lacrado) |
+| Treino e avaliação em validação | Concluídos [SINTÉTICO]: MLP [8] com 121 parâmetros; empate estatístico com árvore e logística. Ver `resultados/sinteticos/treino_v2/`. Teste lacrado |
 
 ## Início rápido
 

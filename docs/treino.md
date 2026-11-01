@@ -66,3 +66,22 @@ O resultado oficial vem do workflow `treino` do GitHub Actions ([ADR 0010](adr/0
 - sementes, configuração da MLP e grades completas com a log loss de cada dobra;
 - métricas de validação, diagramas, épocas de parada e comparações por bootstrap;
 - o oráculo `p_real` como referência do melhor desempenho possível.
+
+## 6. Resultados em validação (execução 41329660286)
+
+Relatório completo: [`resultados/sinteticos/treino_v2/relatorio_validacao.md`](../resultados/sinteticos/treino_v2/relatorio_validacao.md). Origem e hashes: [`ORIGEM.json`](../resultados/sinteticos/treino_v2/ORIGEM.json).
+
+| Modelo | Log loss | Brier | ROC-AUC | ECE |
+|---|---|---|---|---|
+| Baseline ingênuo | 0,6386 | 0,2238 | 0,6218 | 0,0112 |
+| Árvore (`max_depth` 6, `min_samples_leaf` 100) | 0,6359 | 0,2227 | 0,6261 | 0,0199 |
+| Regressão logística (`C` 0,1) | 0,6335 | 0,2217 | 0,6368 | 0,0257 |
+| MLP [8], 121 parâmetros: média ± dp de 5 sementes | 0,6351 ± 0,0009 | 0,2224 ± 0,0004 | 0,6350 ± 0,0027 | 0,0231 ± 0,0051 |
+| MLP [8]: semente candidata 2026 | 0,6346 | 0,2222 | 0,6340 | 0,0129 |
+| *Oráculo `p_real`* | *0,5794* | *0,1976* | *0,7342* | *0,0216* |
+
+- Na validação, **todas as comparações por bootstrap cruzam zero**: nenhum modelo se distingue dos demais.
+- A arquitetura [8] teve a melhor log loss média na validação cruzada (0,6383) e também é a menor.
+- O *early stopping* parou a semente 2026 na época 18 de 38; nas dobras, entre as épocas 19 e 69.
+- O ECE da semente candidata (0,013) está abaixo da média das 5 sementes (0,023). Diferenças de ECE abaixo de cerca de 0,02 estão dentro do ruído de amostragem com 1.800 linhas (o oráculo tem 0,022).
+- **[SINTÉTICO]**: estes resultados não comprovam eficácia educacional. A decisão entre MLP e árvore será tomada no teste lacrado ([adendo 02](protocolo_adendo_02.md)).

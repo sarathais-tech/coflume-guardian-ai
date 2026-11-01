@@ -1,0 +1,29 @@
+{
+  "descricao": "Arquivos do artefato 'treino-v2-validacao' da execução oficial do CI, copiados sem alteração.",
+  "repositorio": "sarathais-tech/coflume-guardian-ai",
+  "workflow": "treino",
+  "execucao_ci": "41329660286",
+  "commit": "05bd902f495a444632b2cf72a71b900d5f868ae2",
+  "zip": {
+    "sha256": "00ca957ee3b649ad07234b00019fc2c7a29f01ff781a6d52efa06980c5ebef75",
+    "conferido_com": "digest do artefato registrado pelo GitHub"
+  },
+  "validacao_json_sha256_publicado_pelo_ci": "efba6c58e5cd2ce97fb20a0333580c71af59a4a354904d04dace2ada5d12aaa5",
+  "arquivos_versionados": {
+    "validacao.json": "efba6c58e5cd2ce97fb20a0333580c71af59a4a354904d04dace2ada5d12aaa5",
+    "ambiente-pip.txt": "34cb03049a073ce8508f0d196fd70076f6ebbda404905a7f028f4448a4652bd6",
+    "mlp_candidata.npz": "7cddea9b6f034c4bc6dcdd74bc85c8c3afe8c10b650fc89f94569d96fea1a9df"
+  },
+  "arquivos_nao_versionados": {
+    "modelos/treino_v2/arvore.joblib": "5e33a5e98c229045c9d568ec761fe87bd845fd0fe1cb6e447be98c9f0e8b6ab3",
+    "modelos/treino_v2/logistica.joblib": "56865277b18c9557af9269af73c897fac47bbb500d9ed9e94af2319e3188303c",
+    "motivo": "formato pickle (pode executar código ao ser aberto); não são necessários para a bancada"
+  },
+  "conferencias": [
+    "SHA-256 do ZIP igual ao digest do GitHub",
+    "SHA-256 do validacao.json igual ao publicado pelo CI nas anotações",
+    "pesos do .npz com a arquitetura registrada ([8], 121 parâmetros)",
+    "previsões recalculadas em Python em toda a validação: diferença máxima de 7,63e-9 nas métricas"
+  ],
+  "teste_lacrado": true
+}
